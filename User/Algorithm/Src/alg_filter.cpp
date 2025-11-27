@@ -122,12 +122,12 @@ void Class_Filter_Fourier::TIM_Adjust_PeriodElapsedCallback()
  * @param __Value 当前值
  * @param __Error_Estimate 估计误差
  */
-void Class_Filter_Kalman::Init(float __Error_Measure, float __Error_Estimate,float __X, float __P)
+void Class_Filter_Kalman::Init(float __Error_Measure, float __Now, float __Error_Estimate)
 {
     Error_Measure = __Error_Measure;
+
+    Now = __Now;
     Error_Estimate = __Error_Estimate;
-    X   = __X;
-    P   = __P; 
 }
 
 /**
@@ -136,24 +136,18 @@ void Class_Filter_Kalman::Init(float __Error_Measure, float __Error_Estimate,flo
  */
 void Class_Filter_Kalman::Recv_Adjust_PeriodElapsedCallback()
 {
-    X_hat = X;                  //最普通的估计方式 直接令本次模型估计值等于上次  A = 1, U = 0;
-    P_hat = P + Error_Estimate;
+    Kalman_Gain = Error_Estimate / (Error_Estimate + Error_Measure);
 
-    //省略了Now 与 X 测量值的转移，因为H = 1
+    Out = Out + Kalman_Gain * (Now - Out);
 
-    Kalman_Gain = P_hat / (P_hat + Error_Measure);              //因为 H 和 A 等于1退化
-
-    X = X + Kalman_Gain * (Now - X);
-    P = (1.0f - Kalman_Gain) * P_hat;
-
-    Out = X;
+    Error_Estimate = (1.0f - Kalman_Gain) * Error_Estimate;
 }
 
 // 初始化滤波器
 void init_filter(SpikeFilter* filter, int window_size) {
     filter->window_size = window_size;
     filter->current_index = 0;
-    filter->buffer = (float*)malloc(window_size * sizeof(float));
+    //filter->buffer = (float*)malloc(window_size * sizeof(float));
     memset(filter->buffer, 0, window_size * sizeof(float));
 }
 
@@ -174,14 +168,14 @@ float process_sample(SpikeFilter* filter, float input) {
     memcpy(sort_array, filter->buffer, filter->window_size * sizeof(float));
     
     // 快速排序取中值
-    qsort(sort_array, filter->window_size, sizeof(float), compare);
+    //qsort(sort_array, filter->window_size, sizeof(float), compare);
     
     return sort_array[filter->window_size / 2];
 }
 
 // 资源释放
 void free_filter(SpikeFilter* filter) {
-    free(filter->buffer);
+    //free(filter->buffer);
 }
 
 float addSampleAndFilter(float input, int windowSize) {

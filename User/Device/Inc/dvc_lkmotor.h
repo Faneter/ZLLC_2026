@@ -202,7 +202,7 @@ protected:
     
     float Current_Max;
     
-    const int16_t Current_Max_Cmd = 262144;//外环速度环262144限幅
+    const int16_t Current_Max_Cmd = 50000;//外环速度环262144限幅
     
     float Out = 0.0f;
     

@@ -16,11 +16,12 @@
 
 #include "alg_pid.h"
 #include "drv_can.h"
-#include "alg_power_limit.h"
+#include "alg_new_power_limit.h"
 #include "dvc_dwt.h"
 #include "alg_filter.h"
+#include "drv_math.h"
 
-#include "alg_SMC_Control.h"
+#include "dvc_referee.h" //单独为了CRC16
 /* Exported macros -----------------------------------------------------------*/
 
 /* Exported types ------------------------------------------------------------*/
@@ -37,6 +38,17 @@ enum Enum_DJI_Motor_Status
 {
     DJI_Motor_Status_DISABLE = 0,
     DJI_Motor_Status_ENABLE,
+};
+
+/**
+ * @brief 磁编状态
+ *
+ */
+
+enum Enum_MA600_Status
+{
+    MA600_Status_DISABLE=0,
+    MA600_Status_ENABLE,
 };
 
 /**
@@ -87,6 +99,20 @@ struct Struct_DJI_Motor_CAN_Data
     uint8_t Reserved;
 } __attribute__((packed));
 
+
+/**
+ * @brief 磁编舵源数据
+ *
+ */
+struct Struct_MA600_CAN_Data
+{
+    uint8_t Header;
+    int16_t Single_Radian;
+    int16_t Multi_Radian;
+    int16_t Omega_Radian;
+    uint8_t Tail;
+}__attribute__((packed));
+
 /**
  * @brief 大疆电机经过处理的数据, 扭矩非国际单位制
  *
@@ -131,9 +157,6 @@ public:
     // PID扭矩环控制
     Class_PID PID_Torque;
 
-    //滑模控制算法，目前只适用于Yaw
-    Class_SMC SMC_Control;
-
     void Init(FDCAN_HandleTypeDef *__hcan, Enum_DJI_Motor_ID __CAN_ID, Enum_DJI_Motor_Control_Method __Control_Method = DJI_Motor_Control_Method_ANGLE, int32_t __Encoder_Offset = 0, float __Omega_Max = 320.0f * RPM_TO_RADPS);
 
     inline uint16_t Get_Output_Max();
@@ -173,7 +196,7 @@ public:
     void CAN_RxCpltCallback(uint8_t *Rx_Data);
     void TIM_Alive_PeriodElapsedCallback();
     void TIM_PID_PeriodElapsedCallback();
-    void TIM_SMC_PeriodElapsedCallback();
+
 
     float Yaw;
     float init_Yaw;
@@ -375,7 +398,7 @@ public:
     //功率限制友元函数
     friend class Class_Power_Limit;
 
-    void Init(FDCAN_HandleTypeDef *__hcan, Enum_DJI_Motor_ID __CAN_ID, Enum_DJI_Motor_Control_Method __Control_Method = DJI_Motor_Control_Method_OMEGA, float __Gearbox_Rate = 13.933f, float __Torque_Max = 16384.0f);
+    void Init(FDCAN_HandleTypeDef *__hcan, Enum_DJI_Motor_ID __CAN_ID, Enum_DJI_Motor_Control_Method __Control_Method = DJI_Motor_Control_Method_AGV_MODE, float __Gearbox_Rate = 13.933f, float __Torque_Max = 16384.0f);
 
     inline uint16_t Get_Output_Max();
     inline Enum_DJI_Motor_Status Get_DJI_Motor_Status();
@@ -391,6 +414,7 @@ public:
     inline float Get_Target_Omega_Radian();
     inline float Get_Target_Omega_Angle();
     inline float Get_Target_Torque();
+		inline float Get_Gearbox_Rate();
     inline float Get_Out();
 
     inline void Set_DJI_Motor_Control_Method(Enum_DJI_Motor_Control_Method __Control_Method);
@@ -399,11 +423,13 @@ public:
     inline void Set_Target_Omega_Angle(float __Target_Omega_Angle);
     inline void Set_Target_Omega_Radian(float __Target_Omega_Radian);
     inline void Set_Target_Torque(float __Target_Torque);
+    inline void Set_Transform_Radian(float __Transform_Radian);
+    inline void Set_Transform_Radian_Omega(float __Transform_Radian_Omega);		
     inline void Set_Out(float __Out);
 
     void CAN_RxCpltCallback(uint8_t *Rx_Data);
     void TIM_Alive_PeriodElapsedCallback();
-    virtual void TIM_PID_PeriodElapsedCallback();
+    void TIM_PID_PeriodElapsedCallback();
 
     float v;
     float init_v = 0.0f;
@@ -431,7 +457,7 @@ protected:
     //一圈编码器刻度
     uint16_t Encoder_Num_Per_Round = 8192;
     //最大输出扭矩
-    uint16_t Output_Max = 16384;
+    uint16_t Output_Max = 11000;
 
     //内部变量
 
@@ -462,9 +488,12 @@ protected:
     //目标的速度, rad/s
     float Target_Omega_Radian = 0.0f;
     //目标的扭矩, 直接采用反馈值
-    float Target_Torque = 0.0f;
+    float Target_Torque = 0.0f;		
     //输出量
     float Out = 0.0f;
+		
+    float Transform_Radian = 0.0f;
+    float Transform_Radian_Omega = 0.0f;		
 
     //内部函数
 
@@ -472,34 +501,43 @@ protected:
     void Output();
 };
 
+
+
 class Class_DJI_Motor_C620_Steer : public Class_DJI_Motor_C620{
 
 public:
     inline float Get_Now_Zero_Offset_Radian();
     inline float Get_Zero_Position();
+		inline Enum_MA600_Status Get_MA600_Status();
 
     inline void Set_Zero_Position(float __Zero_Position);
-    inline void Set_Transform_Radian(float __Transform_Radian);
-    inline void Set_Transform_Radian_Omega(float __Transform_Radian_Omega);
 
+    void CAN_MA_RxCpltCallback(uint8_t *Rx_Data);
+    // void MA600_Data_Process(Struct_CAN_Rx_Buffer *CAN_RxMessage);
     void MA600_Data_Process(Struct_CAN_Rx_Buffer *CAN_RxMessage);
 
-    void TIM_PID_PeriodElapsedCallback();
+    void TIM_Alive_PeriodElapsedCallback_MA600();
 
+		
+	
 protected :
     struct {
         float Single_Radian;
         float Multi_Radian;
-        float Omega;
+        float Omega;//弧度制
     } MA600_Data;
 
-    float Transform_Radian = 0.0f;
-    float Transform_Radian_Omega = 0.0f;
 
+    uint32_t MA_Flag;
+    uint32_t MA_Pre_Flag;
     //软件上的编码器零点    0 --- 2PI
     float Zero_Position = 0.0f;
     //相对软件0点的偏移 rad   0 --- 2PI
     float Zero_Offset_Radian = 0.0f;
+
+
+    //内部状态变量
+    Enum_MA600_Status MA600_Status =MA600_Status_DISABLE;
 };
 
 /* Exported variables --------------------------------------------------------*/
@@ -1151,6 +1189,17 @@ float Class_DJI_Motor_C620::Get_Target_Torque()
 }
 
 /**
+* @brief 获取减速比
+*
+*/
+float Class_DJI_Motor_C620::Get_Gearbox_Rate()
+{
+  return Gearbox_Rate;
+}
+
+
+
+/**
  * @brief 获取输出量
  *
  * @return float 输出量
@@ -1220,6 +1269,14 @@ void Class_DJI_Motor_C620::Set_Target_Torque(float __Target_Torque)
     Target_Torque = __Target_Torque;
 }
 
+inline void Class_DJI_Motor_C620::Set_Transform_Radian(float __Transform_Radian)
+{
+    Transform_Radian = __Transform_Radian;
+}
+
+inline void Class_DJI_Motor_C620::Set_Transform_Radian_Omega(float __Transform_Radian_Omega){
+    Transform_Radian_Omega = __Transform_Radian_Omega;
+}
 /**
  * @brief 设定输出量
  *
@@ -1231,27 +1288,24 @@ void Class_DJI_Motor_C620::Set_Out(float __Out)
     Output();
 }
 
-inline float Class_DJI_Motor_C620_Steer::Get_Now_Zero_Offset_Radian(){
+
+float Class_DJI_Motor_C620_Steer::Get_Now_Zero_Offset_Radian(){
     return Zero_Offset_Radian;
 }
 
-inline float Class_DJI_Motor_C620_Steer::Get_Zero_Position(){
+float Class_DJI_Motor_C620_Steer::Get_Zero_Position(){
     return Zero_Position;
 }
 
-inline void Class_DJI_Motor_C620_Steer::Set_Zero_Position(float __Zero_Position){
+void Class_DJI_Motor_C620_Steer::Set_Zero_Position(float __Zero_Position){
     Zero_Position = Normalize_Angle_Radian_PI_to_PI(__Zero_Position);
 }
 
-inline void Class_DJI_Motor_C620_Steer::Set_Transform_Radian(float __Transform_Radian)
+
+Enum_MA600_Status Class_DJI_Motor_C620_Steer::Get_MA600_Status()
 {
-    Transform_Radian = __Transform_Radian;
+	return MA600_Status;
 }
-
-inline void Class_DJI_Motor_C620_Steer::Set_Transform_Radian_Omega(float __Transform_Radian_Omega){
-    Transform_Radian_Omega = __Transform_Radian_Omega;
-}
-
 #endif
 
 /************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/
