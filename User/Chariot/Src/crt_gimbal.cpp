@@ -12,7 +12,6 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "crt_gimbal.h"
-
 /* Private macros ------------------------------------------------------------*/
 
 /* Private types -------------------------------------------------------------*/
@@ -58,6 +57,8 @@ float debug_6020_radian = 0.0f;
 float debug_6020_angle_kp = 0.0f;
 float debug_6020_angle_ki = 0.0f;
 float debug_6020_angle_kd = 0.0f;
+
+uint32_t dwt_cnt = 0;
 /* Private function declarations ---------------------------------------------*/
 
 /* Function prototypes -------------------------------------------------------*/
@@ -229,7 +230,14 @@ void Class_Gimbal::Output()
                 // Roll轴直接给Radian (旧逻辑是这样)，如果需要改为Angle制，需要引入 debug_roll_target_angle
                 // 这里因为 debug_roll_target_radian 已经是 rad，直接调用 Set_Target_Roll_Radian
                 Set_Target_Roll_Radian(debug_roll_target_radian);
-
+#endif
+#ifdef MY_DEBUG
+                Set_Target_Yaw_Radian(debug_radian[0]);
+                Set_Target_Pitch_Radian(debug_radian[1]);
+                Set_Target_Pitch_2_Radian(debug_radian[2]);
+                Set_Target_Roll_Radian(debug_radian[3]);
+                Set_Target_Pitch_3_Radian(debug_radian[4]);
+                Set_Target_Roll_2_Radian_Single(debug_radian[5]);
 #endif
                 // 电机设置目标角度 (使用 Radian)
                 Motor_DM_J0_Yaw.Set_Target_Omega(Target_Yaw_Omega);
@@ -259,37 +267,6 @@ void Class_Gimbal::Output()
                     Motor_C610_Gripper.Set_Target_Radian(Target_Gripper_Radian);
                 }
 
-                // /*6020_test*/
-                // switch (debug_6020_mode)
-                // {
-                /*角度制*/
-                // Set_Target_Omega_Angle expects Degrees/s?
-                // Target_Roll_2_Omega is degree/s
-                // case (1):
-                // {
-                //     Motor_6020_J5_Roll_2.PID_Omega.Set_K_P(debug_6020_omega_kp);
-                //     Motor_6020_J5_Roll_2.PID_Omega.Set_K_I(debug_6020_omega_ki);
-                //     Motor_6020_J5_Roll_2.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
-                //     Motor_6020_J5_Roll_2.Set_Target_Omega_Radian(debug_6020_omega);
-                //     break;
-                // }
-                // case (2):
-                //     Motor_6020_J5_Roll_2.PID_Angle.Set_K_P(debug_6020_angle_kp);
-                //     Motor_6020_J5_Roll_2.PID_Angle.Set_K_I(debug_6020_angle_ki);
-                //     Motor_6020_J5_Roll_2.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_ANGLE);
-                //     Motor_6020_J5_Roll_2.Set_Target_Radian(debug_6020_radian);
-                //     break;
-                // }
-
-                // switch (debug_c610_mode)
-                // {
-                // case (1):
-                //     Motor_C610_Gripper.Set_Target_Omega_Radian(Target_Gripper_Omega);
-                //     break;
-                // case (2):
-                //     Motor_C610_Gripper.Set_Target_Angle(Target_Gripper_Angle);
-                //     break; // C610 Set_Target_Angle takes Deg.
-                // }
             }
             else if ((Get_Gimbal_Control_Type() == Gimbal_Control_Type_MINIPC) && (MiniPC->Get_MiniPC_Status() != MiniPC_Status_DISABLE))
             {
@@ -392,21 +369,27 @@ void Class_Gimbal::TIM_Calculate_PeriodElapsedCallback()
     case (3): Motor_C610_Gripper.TIM_PID_PeriodElapsedCallback();break;
     case (0): can_2_cnt = 0;break;
     }
-    // PID输出
-    //  Motor_DM_J0_Yaw.TIM_PID_PeriodElapsedCallback();
 
-    // //滑模控制
-    // // static uint8_t mod10 = 0;
-    // // if(mod10 == 2){
-    // //     //注意电机正转角度应该增大，IMU坐标系应该和该坐标系一致，不然会负反馈
-    // //     Motor_DM_J0_Yaw.Set_Transform_Angle(-Boardc_BMI.Get_Angle_Yaw());
-    // //     Motor_DM_J0_Yaw.Set_Transform_Omega(-Boardc_BMI.Get_Gyro_Yaw() * 57.3f);          //陀螺仪这里的角度得是度每秒
-    // //     Motor_DM_J0_Yaw.TIM_SMC_PeriodElapsedCallback();
-    // //     mod10 = 0;
-    // // }
-    // // mod10 ++;
+    //建模测试用
+    control_angle[0] = Motor_DM_J0_Yaw.Get_Now_Angle();
+    control_angle[1] = Motor_DM_J1_Pitch.Get_Now_Angle();
+    control_angle[2] = Motor_DM_J2_Pitch_2.Get_Now_Angle();
+    control_angle[3] = Motor_DM_J3_Roll.Get_Now_Angle();
+    control_angle[4] = Motor_DM_J4_Pitch_3.Get_Now_Angle();
+    control_angle[5] = multi_to_single(Motor_6020_J5_Roll_2.Get_Now_Radian());
 
-    // Motor_DM_J1_Pitch.TIM_PID_PeriodElapsedCallback();
+    motor_to_model(control_angle, model_angle, roll_cali_offset);
+    for(int i = 0; i <6; i++)
+    {
+        model_degree[i] = model_angle[i] * 180.0f / PI;
+    }
+    show_FK_result(model_angle, xyz_rpy);
+    model_to_control(model_result, control_result);
+    // 采用解析法求IK
+    //DWT_GetDeltaT(&dwt_cnt);
+    //ikine_pieper_solutions(target_pos, target_rpy, &solutions[0]);
+    //delta_time = DWT_GetDeltaT(&dwt_cnt);
+    //valid_IK_cnt = solution_filter(&solutions[0], valid_solution);
 }
 
 /**
@@ -435,8 +418,8 @@ void Class_FSM_Calibration::Reload_TIM_Status_PeriodElapsedCallback()
 
             if (roll_cali_status)
             {
-                Gimbal->roll_cali_offset = Cali_Offset;
-                Gimbal->Min_Roll_Radian = Gimbal->roll_cali_offset * 50.0f;
+                Gimbal->roll_cali_offset = Cali_Offset + 0.05f;
+                Gimbal->Min_Roll_Radian = Gimbal->roll_cali_offset * 100.0f;
                 Gimbal->Max_Roll_Radian = Gimbal->Min_Roll_Radian + 300.0f;
             }
 
@@ -506,7 +489,7 @@ bool Class_FSM_Calibration::Motor_Calibration(Class_DM_Motor_J4310 *Motor, float
 
             Cali_Offset = Motor->Get_Now_Angle() - PI; // 协议里上电后默认角度为PI，但是发送角度时这个PI不计入，所以要减去PI
 
-            Motor->Set_Target_Angle((Cali_Offset + 0.0025f) * 50.0f); // 校准好后松开一点
+            Motor->Set_Target_Angle((Cali_Offset + 0.05f) * 100.0f); // 校准好后松开一点
 
 #ifdef MOTOR_TEST
             Motor->Set_DM_Control_Status(DM_Motor_Control_Status_DISABLE); // 测试用

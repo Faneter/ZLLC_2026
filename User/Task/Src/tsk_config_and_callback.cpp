@@ -623,7 +623,17 @@ extern "C" void Task_Init()
 extern "C" void Task_Loop()
 {
 #ifdef GIMBAL
-
+    // 解析法求解逆运动学
+    ikine_pieper_solutions(chariot.Gimbal.target_pos, chariot.Gimbal.target_rpy, &chariot.Gimbal.solutions[0]);
+    chariot.Gimbal.valid_IK_cnt = solution_filter(&chariot.Gimbal.solutions[0], chariot.Gimbal.valid_solution);
+    if(chariot.Gimbal.valid_IK_cnt > 0)
+    {
+        //将选择的合法解转为电机控制角度
+        for(int i = 0; i < 6; i++)
+        {
+            chariot.Gimbal.model_result[i] = chariot.Gimbal.solutions[chariot.Gimbal.solution_index][i][0];
+        }
+    }
 #endif
 #ifdef CHASSIS
 

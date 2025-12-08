@@ -26,7 +26,8 @@
 #include "dvc_lkmotor.h"
 #include "dvc_dmmotor.h"
 #include "alg_fsm.h"
-
+#include "arm_model.h"
+#include "dvc_dwt.h"
 /* Exported macros -----------------------------------------------------------*/
 
 /* Exported types ------------------------------------------------------------*/
@@ -327,6 +328,14 @@ public:
 
     void TIM_Calculate_PeriodElapsedCallback();
 
+    float target_pos[3] = {5.2006f, 2.9150f, 77.7629f};      //目标xyz
+    float target_rpy[3] = {1.5704f, 0.6867f, 0.1338f};      //目标欧拉角
+    Matrixf<6, 1> solutions[8];     //解析法求解的8组解
+    uint8_t valid_IK_cnt = 0;       //合法的逆解个数
+    bool valid_solution[8] = {0};   //逆解合法性数组
+    uint8_t solution_index = 0;      //当前采用的解的索引
+    float control_result[6] = {0};  //转换得到的用于电机控制的角度，调用Set_Target_Radian实现
+    float model_result[6] = {0};    //正解算结果，用于和目标位置对比
 #ifdef MOTOR_TEST
 
     float debug_j0_target_angle = 0.0f; // J0目标角度（角度）
@@ -365,13 +374,14 @@ protected:
     float CRUISE_SPEED_YAW = 100.f;
     float CRUISE_SPEED_PITCH = 70.f;
 
+    //Yaw轴，同步带减速比为2
     // yaw轴最小值，deg
-    float Min_Yaw_Angle = -180.0f;
+    float Min_Yaw_Angle = -360.0f;
     // yaw轴最大值，deg
-    float Max_Yaw_Angle = 180.0f;
+    float Max_Yaw_Angle = 360.0f;
     // rad制
-    float Min_Yaw_Radian = -PI;
-    float Max_Yaw_Radian = PI;
+    float Min_Yaw_Radian = -2 * PI;
+    float Max_Yaw_Radian = 2 * PI;
 
     // pitch轴最小值
     float Min_Pitch_Angle = 0.0f; // 角度，非弧度
@@ -381,12 +391,13 @@ protected:
     float Min_Pitch_Radian = 0.0f;
     float Max_Pitch_Radian = 1.90f;
 
+    //pitch2，同步带减速比45:30
     // pitch2轴最小值与最大值，degree
     float Min_Pitch_2_Angle = 0.0f;
     float Max_Pitch_2_Angle = 110.0f;
     // rad
     float Min_Pitch_2_Radian = 0.0f;
-    float Max_Pitch_2_Radian = 1.92f;
+    float Max_Pitch_2_Radian = 2.87f;
 
     // pitch3轴最小值与最大值，degree
     float Min_Pitch_3_Angle = -146.75f;
@@ -395,6 +406,7 @@ protected:
     float Min_Pitch_3_Radian = -2.561f;
     float Max_Pitch_3_Radian = 0.0f;
 
+    //roll 电机减速比25:1，同步带减速比2:1，总减速比50:1
     // roll校准角度，默认为0
     float roll_cali_offset = 0.0f;
     // roll轴最小值与最大值
@@ -450,6 +462,17 @@ protected:
     float Target_Gripper_Angle = 0.0f;
     float Target_Gripper_Radian = 0.0f;
     float Target_Gripper_Omega = 0.75f;
+
+    //建模解算测试用
+    float model_angle[6] = {0};
+    float model_degree[6];
+    float control_angle[6] = {0};
+    float xyz_rpy[6] = {0};      //正解算结果
+
+    #ifdef MY_DEBUG
+    float debug_radian[6] = {0.0f};    //测试电机控制角度映射专用
+    #endif
+    float delta_time = 0.0f; // 用DWT测得的时间间隔，用这个看解析解的计算速度
 
     // 内部函数
     void Output();
@@ -664,7 +687,7 @@ void Class_Gimbal::Set_Target_Roll_Angle(float __Target_Roll_Angle)
     Target_Roll_Angle = __Target_Roll_Angle;
     // 关节角度(deg) -> 关节角度(rad) -> 电机角度(rad) -> 调用Set_Target_Roll_Radian自动加上Offset和限位
     float joint_rad = Target_Roll_Angle * PI / 180.0f;
-    float motor_rad = joint_rad * 50.0f;
+    float motor_rad = joint_rad * 100.0f;
     Set_Target_Roll_Radian(motor_rad);
 }
 void Class_Gimbal::Set_Target_Roll_Radian(float __Target_Roll_Radian)
