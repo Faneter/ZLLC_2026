@@ -12,7 +12,7 @@
 #include "matrix.h"
 #include "utils.h"
 #include "arm_model.h"
-
+#include "crt_gimbal.h"
 #ifndef PI
 #define PI 3.1415926535f
 #endif
@@ -20,17 +20,22 @@
 using namespace robotics;
 using namespace matrixf;
 
+/*----------------------variables-----------------------*/
+Link links[6];
+float qmin[6] = {-2.883f, -0.926f, 0.15f, -3.028f, -1.336f, -PI};
+float qmax[6] = {2.883f, 0.926f, 2.133f, 3.028f, 1.336f, PI};
+float now_motor_angles[6];
+Serial_Link<6> robot = CreateMyRobot();
+
 // =========================================================
 // 1. 定义机械臂模型 (基于 DH 参数)
 // =========================================================
 // Link(theta, d, a, alpha, type, offset, qmin, qmax, ...)
 // 构型: Yaw - Pitch - Pitch - Roll - Pitch - Roll
 // 数据: d1=8, a2=35, a3=15.1, a4=12.7, a5=11.5, d6=5.0
-float qmin[6] = {-2.883f, -0.926f, 0.15f, -3.028f, -1.336f, -PI};
-float qmax[6] = {2.883f, 0.926f, 2.133f, 3.028f, 1.336f, PI};
+
 Serial_Link<6> CreateMyRobot()
 {
-    Link links[6];
     // (theta, d, a, alpha, type, offset, qmin, qmax)
     // --- Link 1: Yaw (Base -> J2) ---
     // d=8.0 (Z轴高度), alpha=PI/2 (旋转Z轴对齐Y轴供J2使用)
@@ -61,8 +66,6 @@ Serial_Link<6> CreateMyRobot()
     // Serial_Link 模板参数 <6> 表示6自由度
     return Serial_Link<6>(links);
 }
-
-Serial_Link<6> robot = CreateMyRobot();
 
 // 迭代法求逆运动学，纯fw，狗都不用
 bool SolveRobotIK_Iterative(float target_pos[3], float target_rpy[3], float q_result[6], float now_angle[6])
@@ -127,14 +130,6 @@ bool SolveRobotIK_Iterative(float target_pos[3], float target_rpy[3], float q_re
     return true;
 }
 
-/**各关节电机零点设置对应关系
- * J0-Yaw: 模型零点与电机设置零点相同（正对前方），减速比为2
- * J1-Pitch1: 电机零点对应模型-0.9268f，电机直连，减速比为1
- * J2-Pitch2: 电机零点(0.0f)对应模型2.1345f，电机上限()对应模型0.1536f，运动方向定义相反，减速比为1.5
- * J3-Roll: 电机零点（Roll_Min_Radian）对应模型-PI，电机减速比为50.0f
- * J4-Pitch3: 电机零点对应模型零点，电机直连
- * J5-Roll2: 电机零点对应关系待测（），电机直连
- */
 void model_to_control(float model_angles[6], float control_angles[6]) // 将建模解算出的角度转成电机实际控制的角度，这里的control_angle是用来给云台类中各个关节的目标角度值赋值用的，测试角度映射时可以顺带调用
 {
     // 由于电机零点设置与建模时不同，此函数用于将模型中逆运动学得到的关节角度转换为电机控制角度
@@ -159,6 +154,29 @@ void motor_to_model(float motor_angles[6], float model_angles[6], float cali_off
     model_angles[4] = motor_angles[4] - 0.5f * PI - 0.225f;                // J4-Pitch3
     // roll2的零点关系，暂时写为相等
     model_angles[5] = motor_angles[5];
+}
+
+void motor_to_model(float motor_angles[6], float model_angles[6], Class_Gimbal* Gimbal)
+//重载，使用云台类中各个关节的Target_Angle作为输入，不需要校准偏移量，未测试
+{
+    model_angles[0] = Gimbal->Get_Target_Yaw_Radian();           // J0-Yaw
+    model_angles[1] = Gimbal->Get_Target_Pitch_Radian();           // J1-Pitch1
+    model_angles[2] = -Gimbal->Get_Target_Pitch_2_Radian();         // J2-Pitch2
+    model_angles[3] = -(Gimbal->Get_Target_Roll_Radian() - Gimbal->Get_Roll_Min_Radian()) / 100.0f; // J3-Roll
+    model_angles[4] = Gimbal->Get_Target_Pitch_3_Radian();         // J4-Pitch3
+    model_angles[5] = Gimbal->Get_Target_Roll_2_Radian_Single();
+}
+
+float* get_now_motor_angles(Class_Gimbal* Gimbal)
+//返回当前的电机角度，调用Gimbal中Motor对象的Get函数
+{
+    now_motor_angles[0] = Gimbal->Motor_DM_J0_Yaw.Get_Now_Angle();
+    now_motor_angles[1] = Gimbal->Motor_DM_J1_Pitch.Get_Now_Angle();
+    now_motor_angles[2] = Gimbal->Motor_DM_J2_Pitch_2.Get_Now_Angle();
+    now_motor_angles[3] = Gimbal->Motor_DM_J3_Roll.Get_Now_Angle();
+    now_motor_angles[4] = Gimbal->Motor_DM_J4_Pitch_3.Get_Now_Angle();
+    now_motor_angles[5] = multi_to_single(Gimbal->Motor_6020_J5_Roll_2.Get_Now_Radian());
+    return now_motor_angles;
 }
 
 /*测试用函数*/
@@ -439,4 +457,29 @@ uint8_t solution_filter(Matrixf<6, 1> solutions[8], bool valid[8])
         }
     }
     return valid_count;
+}
+
+uint8_t get_best_solution_index(Matrixf<6, 1> solutions[8], bool valid[8], float current_angle[6])
+{
+    float d[8] = {0.0f};    //欧式距离，等于各关节角差值平方之和再求平方根(这里略去求根这一步)
+    float err[6] = {0.0f};  //各个关节的角度差值
+    uint8_t best_index = 0; //求最值经典起手式
+    for(int i =0; i < 8; i++)
+    {
+        if(!valid[i])
+        {
+            d[i] = 114514.1919f;
+        }
+
+        for(int j =0; j < 6; j++)
+        {
+            err[j] = current_angle[j] - solutions[i][j][0];
+            err[j] *= err[j];
+            d[i] += err[j];
+        }
+
+        if(d[i] < d[best_index]) best_index = i;
+    }
+
+    return best_index;
 }

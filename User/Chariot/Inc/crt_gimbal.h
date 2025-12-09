@@ -292,6 +292,7 @@ public:
 
     inline float Get_Target_Roll_2_Angle();
     inline float Get_Target_Roll_2_Radian();
+    inline float Get_Target_Roll_2_Radian_Single();
 
     inline float Get_Target_Gripper_Angle();
     inline float Get_Target_Gripper_Radian();
@@ -576,6 +577,15 @@ float Class_Gimbal::Get_Target_Roll_2_Radian()
 {
     return (Target_Roll_2_Radian);
 }
+float Class_Gimbal::Get_Target_Roll_2_Radian_Single()
+{
+    float single_radian = fmod(Target_Roll_2_Radian, 2.0f * PI);
+    if(single_radian < 0.0f)
+    {
+        single_radian += 2.0f * PI;
+    }
+    return single_radian;
+}
 
 /**
  * @brief 获取Gripper角度
@@ -633,6 +643,7 @@ void Class_Gimbal::Set_Target_Yaw_Angle(float __Target_Yaw_Angle)
 void Class_Gimbal::Set_Target_Yaw_Radian(float __Target_Yaw_Radian)
 {
     Target_Yaw_Radian = __Target_Yaw_Radian;
+    Math_Constrain(&Target_Yaw_Radian, Min_Yaw_Radian, Max_Yaw_Radian);
 }
 
 /**
@@ -647,6 +658,7 @@ void Class_Gimbal::Set_Target_Pitch_Angle(float __Target_Pitch_Angle)
 void Class_Gimbal::Set_Target_Pitch_Radian(float __Target_Pitch_Radian)
 {
     Target_Pitch_Radian = __Target_Pitch_Radian;
+    Math_Constrain(&Target_Pitch_Radian, Min_Pitch_Radian, Max_Pitch_Radian);
 }
 
 /**
@@ -661,6 +673,7 @@ void Class_Gimbal::Set_Target_Pitch_2_Angle(float __Target_Pitch_2_Angle)
 void Class_Gimbal::Set_Target_Pitch_2_Radian(float __Target_Pitch_2_Radian)
 {
     Target_Pitch_2_Radian = __Target_Pitch_2_Radian;
+    Math_Constrain(&Target_Pitch_2_Radian, Min_Pitch_2_Radian, Max_Pitch_2_Radian);
 }
 
 /**
@@ -675,6 +688,7 @@ void Class_Gimbal::Set_Target_Pitch_3_Angle(float __Target_Pitch_3_Angle)
 void Class_Gimbal::Set_Target_Pitch_3_Radian(float __Target_Pitch_3_Radian)
 {
     Target_Pitch_3_Radian = __Target_Pitch_3_Radian;
+    Math_Constrain(&Target_Pitch_3_Radian, Min_Pitch_3_Radian, Max_Pitch_3_Radian);
 }
 
 /**

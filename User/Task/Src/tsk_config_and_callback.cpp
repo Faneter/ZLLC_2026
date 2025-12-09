@@ -628,6 +628,8 @@ extern "C" void Task_Loop()
     chariot.Gimbal.valid_IK_cnt = solution_filter(&chariot.Gimbal.solutions[0], chariot.Gimbal.valid_solution);
     if(chariot.Gimbal.valid_IK_cnt > 0)
     {
+        float* current_angle = get_now_motor_angles(&chariot.Gimbal);
+        chariot.Gimbal.solution_index = get_best_solution_index(chariot.Gimbal.solutions, chariot.Gimbal.valid_solution, current_angle);
         //将选择的合法解转为电机控制角度
         for(int i = 0; i < 6; i++)
         {

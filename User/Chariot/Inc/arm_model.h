@@ -8,7 +8,9 @@
 /* Exported variables --------------------------------------------------------*/
 extern robotics::Serial_Link<6> robot;
 extern robotics::Link links[6];
+class Class_Gimbal;
 /* Exported function declarations --------------------------------------------*/
+robotics::Serial_Link<6> CreateMyRobot();
 
 bool SolveRobotIK_Iterative_Iterative(float target_pos[3], float target_rpy[3], float q_result[6], float now_angle[6]);
 
@@ -21,4 +23,6 @@ void show_FK_result(float joint_angles[6], float xyz_rpy[6]);
 static float normalize_angle(float angle);
 uint8_t ikine_pieper_solutions(float pos_target[3], float rpy_target[3], Matrixf<6, 1> solutions[8]);
 uint8_t solution_filter(Matrixf<6, 1> solutions[8], bool valid[8]);
+uint8_t get_best_solution_index(Matrixf<6, 1> solutions[8], bool valid[8], float current_angle[6]);
+float* get_now_motor_angles(Class_Gimbal* Gimbal);
 #endif // ARM_MODEL_H
