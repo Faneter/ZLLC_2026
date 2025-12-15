@@ -89,10 +89,8 @@ void Class_Gimbal::Init()
     Motor_C610_Gripper.Init(&hfdcan2, DJI_Motor_ID_0x206, DJI_Motor_Control_Method_ANGLE);
     /*初始化状态机，不进行初始化的话状态机没法访问云台对象中的电机的*/
     Calibration_FSM.Gimbal = this;
-
-    /*给MIT模式的电机设置的MIT参数*/
-    // Motor_DM_J0_Yaw.Set_MIT_K_P(5.0f);
-    // Motor_DM_J0_Yaw.Set_MIT_K_D(2.0f);
+    /*初始化轨迹追踪器*/
+    Trajectory_Tracer.Gimbal = this;
 }
 
 /**
@@ -240,7 +238,7 @@ void Class_Gimbal::Output()
                  * default: 急停，机械臂角度保持在当前角度
                  */
                 //把平动起始位置转成控制时的角度
-                model_to_control(move_start_q, move_init_control_angle);
+                Trajectory_Tracer.model_to_control(model_angle, move_init_control_angle);
                 switch (move_test_flag)
                 {
                 case 0:
@@ -285,7 +283,7 @@ void Class_Gimbal::Output()
                     {
                         if(point_cnt < valid_solution_cnt)
                         {
-                            model_to_control(q_solution[point_cnt], move_control_angle);
+                            Trajectory_Tracer.model_to_control(q_solution[point_cnt], move_control_angle);
                             point_cnt++;
                         }
                         else
@@ -448,21 +446,8 @@ void Class_Gimbal::TIM_Calculate_PeriodElapsedCallback()
         break;
     }
 
-    // 测试用，用于查看当前机械臂位置
-    control_angle[0] = Motor_DM_J0_Yaw.Get_Now_Angle();
-    control_angle[1] = Motor_DM_J1_Pitch.Get_Now_Angle();
-    control_angle[2] = Motor_DM_J2_Pitch_2.Get_Now_Angle();
-    control_angle[3] = Motor_DM_J3_Roll.Get_Now_Angle();
-    control_angle[4] = Motor_DM_J4_Pitch_3.Get_Now_Angle();
-    control_angle[5] = multi_to_single(Motor_6020_J5_Roll_2.Get_Now_Radian());
-
-    motor_to_model(control_angle, model_angle, roll_cali_offset);
-    for (int i = 0; i < 6; i++)
-    {
-        model_degree[i] = model_angle[i] * 180.0f / PI;
-    }
-    show_FK_result(model_angle, xyz_rpy);
-
+    // 用于更新当前机械臂位置
+    Trajectory_Tracer.motor_angles_update();
 }
 
 /**

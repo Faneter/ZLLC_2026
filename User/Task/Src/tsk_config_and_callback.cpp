@@ -561,51 +561,51 @@ void Task1ms_TIM5_Callback()
             mod68 = 0;
         }
     }
-    /*测试大王奉命接管此区*/
-    else    //充分利用启动前的2000ms进行轨迹计算
-    {
-    show_FK_result(q_start, start_xyz_rpy);
+    // /*测试大王奉命接管此区*/
+    // else    //充分利用启动前的2000ms进行轨迹计算
+    // {
+    // show_FK_result(q_start, start_xyz_rpy);
 
-    // 将计算出的真实姿态，赋值给 trajectory_rpy
-    trajectory_rpy[0] = start_xyz_rpy[5]; // Yaw
-    trajectory_rpy[1] = start_xyz_rpy[4]; // Pitch
-    trajectory_rpy[2] = start_xyz_rpy[3]; // Roll
+    // // 将计算出的真实姿态，赋值给 trajectory_rpy
+    // trajectory_rpy[0] = start_xyz_rpy[5]; // Yaw
+    // trajectory_rpy[1] = start_xyz_rpy[4]; // Pitch
+    // trajectory_rpy[2] = start_xyz_rpy[3]; // Roll
 
-    if (calculate_cnt < 600)
-    // 前600次用于计算轨迹点，从0到599一共调用600次计算函数，可以把所有点都算完
-    {
-        calculate_trajectory_xyz(q_start, 1, trajectory_xyz); // 计算轨迹点
-        x_calc = trajectory_xyz[calculate_cnt][0];
-        y_calc = trajectory_xyz[calculate_cnt][1];
-        z_calc = trajectory_xyz[calculate_cnt][2];
-    }
-    else if (calculate_cnt < 1200)
-    {
-        chariot.Gimbal.valid_solution_cnt = ikine_trajectory(trajectory_xyz, trajectory_rpy, chariot.Gimbal.q_solution, q_start); // 逆运动学求解，测试用
+    // if (calculate_cnt < 600)
+    // // 前600次用于计算轨迹点，从0到599一共调用600次计算函数，可以把所有点都算完
+    // {
+    //     calculate_trajectory_xyz(q_start, 1, trajectory_xyz); // 计算轨迹点
+    //     x_calc = trajectory_xyz[calculate_cnt][0];
+    //     y_calc = trajectory_xyz[calculate_cnt][1];
+    //     z_calc = trajectory_xyz[calculate_cnt][2];
+    // }
+    // else if (calculate_cnt < 1200)
+    // {
+    //     chariot.Gimbal.valid_solution_cnt = ikine_trajectory(trajectory_xyz, trajectory_rpy, chariot.Gimbal.q_solution, q_start); // 逆运动学求解，测试用
 
-        for (int i = 0; i < 6; i++)
-        {
-            q_to_show[i] = chariot.Gimbal.q_solution[calculate_cnt - 600][i];
-            //show_FK_result(q_to_show, xyz_rpy_to_show); // 计算正运动学，得到末端xyzrpy，用于显示验证
-            if (i < 3)
-            {
-                start_xyz_rpy[i] = trajectory_xyz[calculate_cnt - 600][i];
-            }
-            else
-            {
-                start_xyz_rpy[i] = trajectory_rpy[i - 3];
-            }
-        }
-    }
-    else
-    {
-        // 1200次之后，取点和逆解都算完了，停止计算
-        calculate_cnt = 1200;
-    }
+    //     for (int i = 0; i < 6; i++)
+    //     {
+    //         q_to_show[i] = chariot.Gimbal.q_solution[calculate_cnt - 600][i];
+    //         //show_FK_result(q_to_show, xyz_rpy_to_show); // 计算正运动学，得到末端xyzrpy，用于显示验证
+    //         if (i < 3)
+    //         {
+    //             start_xyz_rpy[i] = trajectory_xyz[calculate_cnt - 600][i];
+    //         }
+    //         else
+    //         {
+    //             start_xyz_rpy[i] = trajectory_rpy[i - 3];
+    //         }
+    //     }
+    // }
+    // else
+    // {
+    //     // 1200次之后，取点和逆解都算完了，停止计算
+    //     calculate_cnt = 1200;
+    // }
 
-    calculate_cnt++;
-    }
-    /*测试大王奉命接管此区*/
+    // calculate_cnt++;
+    // }
+    // /*测试大王奉命接管此区*/
 }
 
 /**

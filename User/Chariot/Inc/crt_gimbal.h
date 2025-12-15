@@ -269,6 +269,8 @@ public:
     Class_FSM_Calibration Calibration_FSM;      //校准状态机类
     friend class Class_FSM_Calibration;
 
+    /*机械臂DH建模*/
+    Class_Trajectory_Tracer Trajectory_Tracer;
     /*机械臂初始化标志位*/
     bool arm_init = false;
 
@@ -485,7 +487,8 @@ protected:
     float model_angle[6] = {0.0f, 0.0f, 2.0f, 0.0f, 0.5f, 0.0f};
     float model_degree[6];
     float control_angle[6] = {0};
-    float xyz_rpy[6] = {0};      //正解算结果
+    float xyz[3] = {0};      //正解算结果
+    float rpy[3] = {0};
 
     #ifdef MY_DEBUG
     float debug_radian[6] = {0.0f};    //测试电机控制角度映射专用
