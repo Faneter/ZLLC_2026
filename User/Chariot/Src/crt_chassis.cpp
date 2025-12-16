@@ -502,7 +502,7 @@ void Class_Tricycle_Chassis::TIM_Calculate_PeriodElapsedCallback(Enum_Sprint_Sta
     }
     else{
         //裁判系统离线限制功率
-        Power_Management.Max_Power = 60.0f;
+        Power_Management.Max_Power = 100.0f;
         Chassis_Buffer = 0.0f;
     }
     
@@ -529,10 +529,10 @@ void Class_Tricycle_Chassis::TIM_Calculate_PeriodElapsedCallback(Enum_Sprint_Sta
     for (int i = 0; i < 4; i++)
     {
         Motor_Wheel[i].Set_Out(Power_Management.Motor_Data[i].output);
-        //Motor_Wheel[i].Output();
+       // Motor_Wheel[i].Output();
 
         Motor_Steer[i].Set_Out(Power_Management.Motor_Data[i + 4].output);//set_out已经有output输出
-        //Motor_Steer[i].Output();
+      //  Motor_Steer[i].Output();
     }
 #else
     for (int i = 0; i < 4; i++)         //数据传递处理

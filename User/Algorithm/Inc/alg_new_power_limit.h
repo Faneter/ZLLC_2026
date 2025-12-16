@@ -105,7 +105,7 @@ protected:
 
     float k1 = 0.0200000001f;
     float k2 = 485.00f;
-    float k3 = 11.00f / 8.00f;
+    float k3 = 4.90f / 8.00f;
     RLS<2> rls{1e-5f, 0.9999f};
 
 };
