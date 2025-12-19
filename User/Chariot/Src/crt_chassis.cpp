@@ -120,7 +120,7 @@ void Class_Tricycle_Chassis::Init(float __Velocity_X_Max, float __Velocity_Y_Max
 float car_V,car_yaw;//车体总体朝向与速度
 void Class_Tricycle_Chassis::Speed_Resolution()
 {
-			if(Motor_Steer[0].Get_MA600_Status()==MA600_Status_DISABLE || Motor_Steer[2].Get_MA600_Status()==MA600_Status_DISABLE)
+			if(Motor_Steer[1].Get_MA600_Status()==MA600_Status_DISABLE || Motor_Steer[2].Get_MA600_Status()==MA600_Status_DISABLE)
 		{
 				for(uint8_t i=0;i<4;i++)
 			{
