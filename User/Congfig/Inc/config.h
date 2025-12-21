@@ -17,36 +17,43 @@
 /* Exported macros -----------------------------------------------------------*/
 
 //底盘或云台状态
-<<<<<<< HEAD
-//#define CHASSIS
-=======
-// #define CHASSIS
->>>>>>> d28e22f2ed8b8045d8d1979d840f7161714beda0
-#define GIMBAL
+#define CHASSIS
+// #define GIMBAL
 
 //调试或比赛状态
 #define DEBUG
 
+#define Only_Chassis
 //功率控制相关
 #define POWER_CONTROL 1 //启用功率控制
-//#define BUFFER_LOOP
+// #define BUFFER_LOOP
+
+//使能超电
+#define SuperCap 0
+
+//底盘解算选择
+//#define SPEED_SLOPE
+
+//位姿控制选择
+#define Angle_Locked
+//#define Angle_UnLocked
+
+//发射机构选择
+// #define Single_Friction
+#define Double_Friction
 
 //遥控器选择
 //#define USE_VT13
 #define USE_DR16
 
 /* 兵种/底盘类型选择*/
-<<<<<<< HEAD
-#define AGV      //舵轮底盘
+// #define AGV      //舵轮底盘
 //#define OMNI_WHEEL //全向轮底盘
-=======
-//#define AGV      //舵轮底盘
-#define OMNI_WHEEL //全向轮底盘
->>>>>>> d28e22f2ed8b8045d8d1979d840f7161714beda0
+#define TRACK_LEG //前履带后轮腿底盘
 
 //#define INFANTRY //步兵
-//#define HERO  //英雄
-#define SENTRY //哨兵
+#define HERO  //英雄
+//#define SENTRY //哨兵
 
 /*轮组数据*/
 #ifdef INFANTRY

@@ -1321,6 +1321,7 @@ public:
     #ifdef GIMBAL
     inline void Set_Robot_ID(Enum_Referee_Data_Robots_ID __Robot_ID);
     inline void Set_Game_Stage(Enum_Referee_Game_Status_Stage __Game_Stage);  
+    inline void Set_Shoot_Speed(float __Shoot_Speed);
     inline void Set_Booster_17mm_1_Heat_CD(uint16_t __Booster_17mm_1_Heat_CD);
     inline void Set_Booster_17mm_1_Heat_Max(uint16_t __Booster_17mm_1_Heat_Max);
     inline void Set_Sentry_Revive_Status(Enum_Sentry_Revive_Status __Sentry_Revive_Status);
@@ -2425,7 +2426,17 @@ void Class_Referee::Set_Game_Stage(Enum_Referee_Game_Status_Stage __Game_Stage)
 }
 #endif
 
-
+/**
+ * @brief 设置机器人弹速
+ * 
+ * @param __Shoot_Speed 机器人弹速
+ */
+#ifdef GIMBAL
+void Class_Referee::Set_Shoot_Speed(float __Shoot_Speed)
+{
+    this->Robot_Booster.Speed = __Shoot_Speed;
+}
+#endif
 /**
  * @brief 设置17mm枪管冷却cd
  *

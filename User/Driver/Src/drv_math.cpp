@@ -185,7 +185,6 @@ float Math_Int_To_Float(int32_t x, int32_t Int_Min, int32_t Int_Max, float Float
     return (out);
 }
 
-<<<<<<< HEAD
 /**
  * @brief 将任意角度归一化到 -PI 到 PI  可用于处理-180于180的突变 Rad
  * @param Angle_Radian 
@@ -212,6 +211,44 @@ float Normalize_Angle_Radian_0_to_2PI(float Angle_Radian){
     return Angle_Radian;
 }
 
-=======
->>>>>>> d28e22f2ed8b8045d8d1979d840f7161714beda0
+/**
+ * @brief 计算浮点型数值的平方
+ * 
+ * @param Input 
+ * @return float 
+ */
+float Square(float Input)
+{
+	float Ans;
+	Ans = Input * Input;
+	return Ans;
+}
+
+/**
+ * @brief 
+ * 
+ * @param y 
+ * @param x 
+ * @return double 
+ */
+double My_atan(double y, double x)
+{
+	double atan;
+	atan = atan2(y, x);
+	if (x == 0)
+	{
+		if (y > 0)
+			atan = PI / 2;
+		else if (y < 0)
+			atan = -PI / 2;
+	}
+	if (y == 0)
+	{
+		if (x > 0)
+			atan = 0;
+		else if (x < 0)
+			atan = PI;
+	}
+	return atan;
+}
 /************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/
