@@ -443,10 +443,10 @@ void Class_Mecanum_Chassis::Init(float __Velocity_X_Max, float __Velocity_Y_Max,
     Track_Motor[1].PID_Omega.Init(650.0f, 0.0f, 0.0f, 0.0f, Track_Motor[1].Get_Output_Max(), Track_Motor[1].Get_Output_Max());
 
     // 麦轮轮组电机ID初始化
-    Mecanum_Wheels[0].Init(&hfdcan1, DJI_Motor_ID_0x201);
-    Mecanum_Wheels[1].Init(&hfdcan1, DJI_Motor_ID_0x202);
-    Mecanum_Wheels[2].Init(&hfdcan1, DJI_Motor_ID_0x203);
-    Mecanum_Wheels[3].Init(&hfdcan1, DJI_Motor_ID_0x204);
+    Mecanum_Wheels[0].Init(&hfdcan1, DJI_Motor_ID_0x201, DJI_Motor_Control_Method_OMEGA, 3591.0f / 187.0f);
+    Mecanum_Wheels[1].Init(&hfdcan1, DJI_Motor_ID_0x202, DJI_Motor_Control_Method_OMEGA, 3591.0f / 187.0f);
+    Mecanum_Wheels[2].Init(&hfdcan1, DJI_Motor_ID_0x203, DJI_Motor_Control_Method_OMEGA, 3591.0f / 187.0f);
+    Mecanum_Wheels[3].Init(&hfdcan1, DJI_Motor_ID_0x204, DJI_Motor_Control_Method_OMEGA, 3591.0f / 187.0f);
     Track_Motor[0].Init(&hfdcan2, DJI_Motor_ID_0x201);
     Track_Motor[1].Init(&hfdcan2, DJI_Motor_ID_0x202);
 

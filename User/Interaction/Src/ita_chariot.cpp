@@ -40,6 +40,8 @@ void Class_Chariot::Init(float __DR16_Dead_Zone)
     Chassis.Referee = &Referee;
     // 限速，暂时给到2m/s ， 1.75m/s和 4 rad/s
     Chassis.Init(2.0f, 1.75f, 4.0f);
+    // 力控底盘
+    Force_Chassis.Init();
 
     // 超电
     Chassis.Supercap.Referee = &Referee;
@@ -525,10 +527,10 @@ void Class_Chariot::Chassis_Test_Control()
         }
         else
         {
-        // 设定矩形到圆形映射进行控制，velocity_x为前，velocity_y为左
-        chassis_velocity_y = -dr16_l_x * sqrt(1.0f - dr16_l_y * dr16_l_y / 2.0f) * Chassis.Get_Velocity_X_Max();
-        chassis_velocity_x = dr16_l_y * sqrt(1.0f - dr16_l_x * dr16_l_x / 2.0f) * Chassis.Get_Velocity_Y_Max();
-        chassis_omega = -dr16_r_x * sqrt(1.0f - dr16_r_x * dr16_r_x / 2.0f) * Chassis.Get_Omega_Max();
+            // 设定矩形到圆形映射进行控制，velocity_x为前，velocity_y为左
+            chassis_velocity_y = -dr16_l_x * sqrt(1.0f - dr16_l_y * dr16_l_y / 2.0f) * Chassis.Get_Velocity_X_Max();
+            chassis_velocity_x = dr16_l_y * sqrt(1.0f - dr16_l_x * dr16_l_x / 2.0f) * Chassis.Get_Velocity_Y_Max();
+            chassis_omega = -dr16_r_x * sqrt(1.0f - dr16_r_x * dr16_r_x / 2.0f) * Chassis.Get_Omega_Max();
         }
         break;
     }
@@ -698,6 +700,14 @@ void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
     else
     {
         Chassis.TIM_Calculate_PeriodElapsedCallback(Sprint_Status);
+
+        static uint8_t ms_cnt = 0;
+        ms_cnt++;
+        if (ms_cnt % 2 == 0)
+        {
+            Force_Chassis.TIM_2ms_Resolution_PeriodElapsedCallback();
+            ms_cnt = 0;
+        }
     }
 #else // 底盘给云台发消息
     CAN_Chassis_Tx_Gimbal_Callback();
@@ -799,6 +809,7 @@ void Class_Chariot::TIM1msMod50_Alive_PeriodElapsedCallback()
         for (int i = 0; i < 4; i++)
         {
             Chassis.Mecanum_Wheels[i].TIM_Alive_PeriodElapsedCallback();
+            Force_Chassis.Motor_Wheel[i].TIM_100ms_Alive_PeriodElapsedCallback();
         }
         if (mod50_mod3 % 3 == 0)
         {

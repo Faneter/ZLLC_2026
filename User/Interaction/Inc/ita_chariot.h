@@ -22,6 +22,7 @@
 #include "tsk_config_and_callback.h"
 #include "dvc_supercap.h"
 #include "crt_chassis.h"
+#include "crt_force_control_chassis.h"
 #include "config.h"
 #include "alg_filter.h"
 #include "arm_model.h"
@@ -139,6 +140,8 @@ public:
     Class_Referee Referee;
     // 底盘
     Class_Mecanum_Chassis Chassis;
+    // 力控底盘
+    Class_Chassis Force_Chassis;
 
 #ifdef GIMBAL
     // 遥控器
@@ -168,10 +171,11 @@ public:
     Enum_Chassis_Control_Type Pre_Chassis_Control_Type = Chassis_Control_Type_DISABLE;
     inline Enum_Chassis_Control_Type Get_Pre_Chassis_Control_Type();
     inline void Set_Pre_Chassis_Control_Type(Enum_Chassis_Control_Type __Chassis_Control_Type);
+
 #endif
 
 #ifdef MOTOR_TEST_CHASSIS
-    Class_DJI_Motor_C620_Uplift Test_Motor;
+    Class_DJI_Motor_C620 Test_Motor;
     void Init_Motor_Test_Chassis();
     void Output_Motor_Test_Chassis();
     float target_omega = 0.0f; // rad
@@ -233,6 +237,7 @@ public:
     Enum_MiniPC_Status MiniPC_Status = MiniPC_Status_DISABLE;
     // 裁判系统UI刷新状态
     Enum_Referee_UI_Refresh_Status Referee_UI_Refresh_Status = Referee_UI_Refresh_Status_DISABLE;
+    
     // 底盘云台通讯数据
     float Gimbal_Tx_Pitch_Angle = 0;
 
@@ -508,5 +513,4 @@ Enum_Gimbal_Status Class_Chariot::Get_Gimbal_Status()
 #endif
 
 #endif
-
 /************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/
