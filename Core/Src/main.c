@@ -71,7 +71,7 @@ void SystemClock_Config(void);
   * @retval int
   */
 int main(void)
-{
+{	
 
   /* USER CODE BEGIN 1 */
 
@@ -110,7 +110,7 @@ int main(void)
   MX_TIM4_Init();
   MX_UART8_Init();
   MX_UART9_Init();
-  MX_IWDG1_Init();
+  //MX_IWDG1_Init();
   /* USER CODE BEGIN 2 */
   Task_Init();
   /* USER CODE END 2 */
