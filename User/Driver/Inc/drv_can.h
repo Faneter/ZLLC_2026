@@ -74,7 +74,13 @@ struct Struct_CAN_Manage_Object
     Struct_CAN_Rx_Buffer Rx_Buffer;
     CAN_Call_Back Callback_Function;
 };
-
+struct CAN_Massage_Unit
+{
+        FDCAN_HandleTypeDef *hcan;
+        uint16_t ID;
+        uint8_t *Data;
+        uint16_t Length;
+};
 /* Exported variables ---------------------------------------------------------*/
 
 extern FDCAN_HandleTypeDef hfdcan1;
@@ -125,6 +131,7 @@ extern uint8_t CAN3_0xxf7_Tx_Data[];
 extern uint8_t CAN3_0xxf8_Tx_Data[];
 
 extern uint8_t CAN_Supercap_Tx_Data[];
+extern uint8_t CAN3_Chassis_Tx_Gimbal_Data[8];   //底盘给云台发送缓冲区
 extern uint8_t CAN3_Gimbal_Tx_Chassis_Data[];  //云台给底盘发送缓冲区
 extern uint8_t CAN3_Sentry_CMD_Data[];     //哨兵自主决策缓冲区
 extern uint8_t CAN3_Chassis_Tx_Data_A[];   //底盘给云台发送缓冲区
@@ -139,6 +146,12 @@ extern uint8_t CAN3_MiniPC_Tx_Data_B[];   //下位机发送缓冲区
 extern uint8_t CAN3_MiniPC_Tx_Data_C[];   //下位机发送缓冲区
 extern uint8_t CAN3_MiniPC_Tx_Data_D[];   //下位机发送缓冲区
 
+extern uint8_t CAN1_0x1a_Tx_Streeing_Wheel_A_data[8];
+extern uint8_t CAN1_0x1b_Tx_Streeing_Wheel_B_data[8];
+extern uint8_t CAN1_0x1c_Tx_Streeing_Wheel_C_data[8];
+extern uint8_t CAN1_0x1d_Tx_Streeing_Wheel_D_data[8];
+extern uint8_t CAN1_0x01E_Tx_Data[8];
+extern uint8_t CAN2_Chassis_Tx_Gimbal_Data[8];   //底盘给云台发送缓冲区
 /*********LK电机 控制缓冲区***********/
 extern uint8_t CAN1_0x141_Tx_Data[8];
 extern uint8_t CAN1_0x142_Tx_Data[8];

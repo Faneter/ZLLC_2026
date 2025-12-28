@@ -67,20 +67,36 @@ float Class_New_Power_Limit::Calculate_Toque(float omega, float power, float tor
 
     float delta = omega * omega - 4 * (k1 * fabs(omega) + k3 - power) * k2;
 
-    if (floatEqual(delta, 0.0f))
+    if(delta < 0.0f)
     {
-        newTorqueCurrent = -omega / (2.0f * k2);
+        newTorqueCurrent = 0.0f; //-omega / (2.0f * k2);
     }
-    else if (delta > 0.0f)
+    else 
     {
         float solution1 = (-omega + sqrtf(delta)) / (2.0f * k2);
         float solution2 = (-omega - sqrtf(delta)) / (2.0f * k2);
-
-        newTorqueCurrent = (torque > 0) ? solution1 : solution2;
-    }
-    else // delta < 0
-    {
-        newTorqueCurrent = -omega / (2.0f * k2);
+        if ((solution1 > 0.0f && solution2 < 0.0f) || (solution1 < 0.0f && solution2 > 0.0f))
+        {
+            if ((torque > 0.0f && solution1 > 0.0f) || (torque < 0.0f && solution1 < 0.0f))
+            {
+                newTorqueCurrent = solution1;
+            }
+            else
+            {
+                newTorqueCurrent = solution2;
+            }
+        }
+        else
+        {
+            if (Math_Abs(solution1) < Math_Abs(solution2))
+            {
+                newTorqueCurrent = solution1;
+            }
+            else
+            {
+                newTorqueCurrent = solution2;
+            }
+        }
     }
 
     return newTorqueCurrent;
@@ -178,7 +194,7 @@ void Class_New_Power_Limit::Power_Task(Struct_Power_Management &power_management
     power_management.Needed_Scaled_Theoretical_Total_Power = dir_needScaled_power + mot_needScaled_power;
 
     //上层功率分配
-    Power_Allocate(power_management.Max_Power,0.6f,dirmotor_predic_power,motmotor_predic_power,&dir_max_power,&mot_max_power);
+    Power_Allocate(power_management.Max_Power,0.0f,dirmotor_predic_power,motmotor_predic_power,&dir_max_power,&mot_max_power);
     //下层功率限制
     if (dir_max_power >= dirmotor_predic_power) // 计算转向收缩系数
     {

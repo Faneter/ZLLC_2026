@@ -75,9 +75,29 @@ uint8_t CAN3_MiniPC_Tx_Data_A[8];   //下位机发送缓冲区
 uint8_t CAN3_MiniPC_Tx_Data_B[8];   //下位机发送缓冲区
 uint8_t CAN3_MiniPC_Tx_Data_C[8];   //下位机发送缓冲区
 uint8_t CAN3_MiniPC_Tx_Data_D[8];   //下位机发送缓冲区
+uint8_t CAN3_Chassis_Tx_Gimbal_Data[8];   //底盘给云台发送缓冲区
 uint8_t CAN3_Gimbal_Tx_Chassis_Data[8];  //云台给底盘发送缓冲区
 uint8_t CAN3_Sentry_CMD_Data[8];   //云台给底盘发送缓冲区
 
+//底盘分别给四个舵轮发送角度与速度数据
+uint8_t CAN1_0x1a_Tx_Streeing_Wheel_A_data[8];
+uint8_t CAN1_0x1b_Tx_Streeing_Wheel_B_data[8];
+uint8_t CAN1_0x1c_Tx_Streeing_Wheel_C_data[8];
+uint8_t CAN1_0x1d_Tx_Streeing_Wheel_D_data[8];
+CAN_Massage_Unit Massage_queue[4] = 
+{
+    {&hfdcan2, 0x01a, CAN1_0x1a_Tx_Streeing_Wheel_A_data, 8},
+    {&hfdcan2, 0x01b, CAN1_0x1b_Tx_Streeing_Wheel_B_data, 8},
+    {&hfdcan2, 0x01c, CAN1_0x1c_Tx_Streeing_Wheel_C_data, 8},
+    {&hfdcan2, 0x01d, CAN1_0x1d_Tx_Streeing_Wheel_D_data, 8},
+};
+static uint8_t CAN1_Tx_Index = 0;
+//底盘给舵小板发送功率数据
+uint8_t CAN1_0x01E_Tx_Data[8];
+//云台c板发给Image板的CAN数据
+uint8_t CAN1_0x02E_TX_Data[8];
+uint8_t CAN2_Gimbal_Tx_Chassis_Data[8];  //云台给底盘发送缓冲区
+uint8_t CAN2_Chassis_Tx_Gimbal_Data[8];   //底盘给云台发送缓冲区
 /*********LK电机 控制缓冲区***********/
 uint8_t CAN1_0x141_Tx_Data[8];
 uint8_t CAN1_0x142_Tx_Data[8];
@@ -324,25 +344,39 @@ void TIM_CAN_PeriodElapsedCallback()
 {
     
     #ifdef CHASSIS
-    static uint8_t mod5 = 0,mod100 = 0,mod20 = 0;
-    mod5++, mod100++,mod20++;
+    static uint8_t mod5 = 0,mod100 = 0,mod20 = 0,mod50 = 0;
+    mod5++, mod100++, mod20++, mod50++;
     if (mod5 == 5)  //200Hz
     {
         mod5 = 0;
-        //3508    
-        CAN_Send_Data(&hfdcan1, 0x200, CAN1_0x200_Tx_Data, 8);
+        
+        #ifdef TRACK_LEG
+        CAN_Send_Data(&hfdcan2, 0x200, CAN2_0x200_Tx_Data, 8);//履带驱动电机
+        CAN_Send_Data(&hfdcan1, 0x200, CAN1_0x200_Tx_Data, 8);//3508 
+        #endif
         #ifdef AGV
         //6020
-        CAN_Send_Data(&hfdcan2, 0x1fe, CAN2_0x1fe_Tx_Data, 8);
+        //CAN_Send_Data(&hfdcan2, 0x01e, CAN1_0x01E_Tx_Data, 8);
         #endif
     }
     
     if (mod100 == 10) //10Hz
     {
-        CAN_Send_Data(&hfdcan3, 0x191, CAN3_Chassis_Tx_Data_G, 8);
+
+        #ifdef AGV
+        CAN_Send_Data(&hfdcan1, 0x51, CAN2_Chassis_Tx_Gimbal_Data, 8);
+        #endif
+        CAN_Send_Data(&hfdcan3, 0x51, CAN3_Chassis_Tx_Gimbal_Data, 8);
         mod100 = 0;
     }
+    #ifdef TRACK_LEG
     if (mod20 == 20) //50Hz
+    {
+        mod20 == 0;
+    }
+    #endif
+    #ifdef AGV
+    if (mod20 % 20 == 0) //50Hz
     {
         //上板
         CAN_Send_Data(&hfdcan3, 0x188, CAN3_Chassis_Tx_Data_A, 8);
@@ -352,21 +386,41 @@ void TIM_CAN_PeriodElapsedCallback()
         CAN_Send_Data(&hfdcan3, 0x198, CAN3_Chassis_Tx_Data_D, 8);
         CAN_Send_Data(&hfdcan3, 0x196, CAN3_Chassis_Tx_Data_F, 8);
         //超电
-        CAN_Send_Data(&hfdcan2, 0x66, CAN_Supercap_Tx_Data, 8);
+        CAN_Send_Data(&hfdcan1, 0x66, CAN_Supercap_Tx_Data, 8);
+
+        CAN_Send_Data(&hfdcan2, 0x01e, CAN1_0x01E_Tx_Data, 8);
+        //mod20 = 0;
+    }
+     if (mod20 % 2 == 0)
+    {
+        // while (HAL_FDCAN_GetTxFifoFreeLevel(&hfdcan2)) // 160hz
+        // {
+        //     CAN1_Tx_Index = (CAN1_Tx_Index + 1) % 2;
+        //     CAN_Send_Data(Massage_queue[CAN1_Tx_Index].hcan, Massage_queue[CAN1_Tx_Index].ID, Massage_queue[CAN1_Tx_Index].Data, Massage_queue[CAN1_Tx_Index].Length);
+        // }
+            //   CAN1_Tx_Index = (CAN1_Tx_Index + 1) % 2;
+            // CAN_Send_Data(Massage_queue[CAN1_Tx_Index].hcan, Massage_queue[CAN1_Tx_Index].ID, Massage_queue[CAN1_Tx_Index].Data, Massage_queue[CAN1_Tx_Index].Length);
+        CAN1_Tx_Index = 0;
+            CAN_Send_Data(Massage_queue[CAN1_Tx_Index].hcan, Massage_queue[CAN1_Tx_Index].ID, Massage_queue[CAN1_Tx_Index].Data, Massage_queue[CAN1_Tx_Index].Length);
+
+    }
+     if(mod20 % 2 == 1)
+    {
+        CAN1_Tx_Index = 1;
+        CAN_Send_Data(Massage_queue[CAN1_Tx_Index].hcan, Massage_queue[CAN1_Tx_Index].ID, Massage_queue[CAN1_Tx_Index].Data, Massage_queue[CAN1_Tx_Index].Length);
+    }
+
+    if(mod20 > 100)
+    {
         mod20 = 0;
     }
+    #endif
     #elif defined (GIMBAL)
 
-<<<<<<< HEAD
     static uint8_t mod5 = 0,mod4 = 0,mod3 = 0,mod20 = 0;
     mod5++;
     mod4++;
 		mod3++;
-=======
-    static uint8_t mod5 = 0,mod4 = 0,mod20 = 0;
-    mod5++;
-    mod4++;
->>>>>>> d28e22f2ed8b8045d8d1979d840f7161714beda0
     mod20++;
     
     if(mod5 == 5)
@@ -383,14 +437,11 @@ void TIM_CAN_PeriodElapsedCallback()
     if(mod4 == 4)
     {
         mod4 = 0;
-<<<<<<< HEAD
     }
     if(mod3 == 3)
     {
-        CAN_Send_Data(&hfdcan2, 0x200, CAN2_0x200_Tx_Data, 8); // 摩擦轮*3
+        CAN_Send_Data(&hfdcan1, 0x200, CAN1_0x200_Tx_Data, 8); // 摩擦轮
         mod3 = 0;
-=======
->>>>>>> d28e22f2ed8b8045d8d1979d840f7161714beda0
     }   
     if (mod20 == 20) //50Hz
     {

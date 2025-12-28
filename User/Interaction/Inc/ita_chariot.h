@@ -137,18 +137,33 @@ class Class_Chariot
 {
 public:
     #ifdef CHASSIS
-    
+        #ifdef AGV
+        float Chassis_Coordinate_System_Angle_Rad;
+        #endif
         //获取yaw电机编码器值 用于底盘和云台坐标系的转换
         //底盘随动PID环
         Class_DJI_Motor_GM6020 Motor_Yaw;
+        Class_DM_Motor_J4310 Motor_Yaw_DM4310;
         Class_PID PID_Chassis_Fllow;
+        #ifdef Only_Chassis
+        //遥控器
+        Class_DR16 DR16;
+        //遥控器离线保护控制状态机
+        Class_FSM_Alive_Control FSM_Alive_Control;
+        friend class Class_FSM_Alive_Control;
+        #endif
 
     #endif 
 
         //裁判系统
         Class_Referee Referee;
         //底盘
-        Class_Tricycle_Chassis Chassis;
+        #ifdef TRACK_LEG
+        Class_HybridTrackLeg_Chassis Chassis;
+        #endif
+        #ifdef AGV
+        Class_Streeing_Chassis Chassis;
+        #endif
 
         
     #ifdef GIMBAL
@@ -174,12 +189,44 @@ public:
     void Init(float __DR16_Dead_Zone = 0);
     
     #ifdef CHASSIS
-
+        #ifdef OLD
         void CAN_Chassis_Rx_Gimbal_Callback(uint8_t *Rx_Data);
         void CAN_Chassis_Tx_Gimbal_Callback();
         void TIM1msMod50_Gimbal_Communicate_Alive_PeriodElapsedCallback();
         inline void Set_Gimbal_Status(Enum_Gimbal_Status __Gimbal_Status);
         inline Enum_Gimbal_Status Get_Gimbal_Status();
+        #endif
+        #ifdef AGV
+        float Get_Chassis_Coordinate_System_Angle_Rad();
+        inline float Get_Gimbal_Yaw_IMU_Angle();
+        inline void Set_Gimbal_Yaw_Angle(float __Angle);
+        inline void  Set_Gimbal_Pitch_Angle(float __Angle);
+        inline void Set_Chassis_Reference_Angle(float __Reference_Angle);
+        inline void Process_Chassis_Logic_Direction();
+        void CAN_Chassis_Rx_Gimbal_Callback();
+        void CAN_Chassis_Tx_Gimbal_Callback();
+        void TIM1msMod50_Gimbal_Communicate_Alive_PeriodElapsedCallback();
+        void CAN_Chassis_Tx_Streeing_Wheel_Callback();
+        void CAN_Chassis_Tx_Max_Power_Callback();
+        void Chariot_Referee_UI_Tx_Callback(Enum_Referee_UI_Refresh_Status __Referee_UI_Refresh_Status);
+        void Control_Chassis_Omega_TIM_PeriodElapsedCallback();
+        #endif
+        #ifdef TRACK_LEG
+        void TIM1msMod50_Gimbal_Communicate_Alive_PeriodElapsedCallback();
+        void CAN_Chassis_Rx_Gimbal_Callback();
+        void CAN_Chassis_Tx_Gimbal_Callback();
+        void Control_Chassis_Omega_TIM_PeriodElapsedCallback();
+        inline float Get_Gimbal_Yaw_IMU_Angle();
+        inline void Set_Gimbal_Yaw_Angle(float __Angle);
+        inline void  Set_Gimbal_Pitch_Angle(float __Angle);
+        inline void Set_Chassis_Reference_Angle(float __Reference_Angle);
+        #ifdef Only_Chassis
+        inline Enum_Chassis_Control_Type Get_Pre_Chassis_Control_Type();
+        inline void Set_Pre_Chassis_Control_Type(Enum_Chassis_Control_Type __Chassis_Control_Type);
+        void TIM_Control_Callback();
+        #endif
+
+        #endif
 
     #elif defined(GIMBAL)
 
@@ -213,16 +260,27 @@ public:
     void TIM1msMod50_Alive_PeriodElapsedCallback();
     
     //底盘云台通讯变量
+    //一键掉头
+    Enum_Chassis_Logics_Direction Chassis_Logics_Direction = Chassis_Logic_Direction_Positive;
     //冲刺
     Enum_Sprint_Status Sprint_Status = Sprint_Status_DISABLE;
+    //yaw编码开关
+    Enum_Yaw_Encoder_Control_Status Yaw_Encoder_Control_Status = Yaw_Encoder_Control_Status_Disable;
     //弹仓开关
     Enum_Bulletcap_Status Bulletcap_Status = Bulletcap_Status_CLOSE;
     //摩擦轮开关
     Enum_Fric_Status Fric_Status = Fric_Status_CLOSE;
+    //超级电容超级放电状态
+    Enum_Supercap_Control_Status  Supercap_Control_Status = Supercap_Control_Status_DISABLE;
     //自瞄锁住状态
     Enum_MinPC_Aim_Status MiniPC_Aim_Status = MinPC_Aim_Status_DISABLE;
     //迷你主机状态
     Enum_MiniPC_Status MiniPC_Status = MiniPC_Status_DISABLE;
+    /*
+    Enum_Radar_Target UI_Radar_Target = Radar_Target_Pos_Outpost;
+    Enum_Radar_Target_Outpost UI_Radar_Target_Pos = Radar_Target_Pos_Outpost_A;
+    Enum_Radar_Control_Type UI_Radar_Control_Type = Radar_Control_Type_Person;
+    */
     //裁判系统UI刷新状态
     Enum_Referee_UI_Refresh_Status Referee_UI_Refresh_Status = Referee_UI_Refresh_Status_DISABLE;
     //底盘云台通讯数据
@@ -240,20 +298,30 @@ protected:
     //初始化相关常量
 
     //绑定的CAN
-    Struct_CAN_Manage_Object *CAN_Manage_Object = &CAN3_Manage_Object;
+    Struct_CAN_Manage_Object *CAN_Manage_Object = &CAN1_Manage_Object;
 
     #ifdef CHASSIS
         //底盘标定参考正方向角度(数据来源yaw电机)
-        float Reference_Angle = 0.520019531f;
+        float Reference_Angle = 0.980980754f;
         //小陀螺云台坐标系稳定偏转角度 用于矫正
         float Offset_Angle = 0.0f;  //7.5°
         //底盘转换后的角度（数据来源yaw电机）
         float Chassis_Angle;
+        //获取云台的IMU yaw轴角度
+        float Yaw_IMU_Angle;
+        float Pitch_IMU_Angle;
         //写变量
         uint32_t Gimbal_Alive_Flag = 0;
         uint32_t Pre_Gimbal_Alive_Flag = 0;
 
         Enum_Gimbal_Status Gimbal_Status =  Gimbal_Status_DISABLE;
+        
+        //遥控器拨动的死区, 0~1
+        float DR16_Dead_Zone;
+        //DR16控制数据来源
+        Enum_DR16_Control_Type DR16_Control_Type = DR16_Control_Type_REMOTE;
+        Enum_Chassis_Control_Type Pre_Chassis_Control_Type = Chassis_Control_Type_DISABLE;
+        
     #endif
 
     #ifdef GIMBAL
@@ -456,6 +524,7 @@ protected:
 #endif
 
 #ifdef CHASSIS
+    #ifdef OLD
     void Class_Chariot::Set_Gimbal_Status(Enum_Gimbal_Status __Gimbal_Status){
         Gimbal_Status = __Gimbal_Status;
     }
@@ -463,7 +532,49 @@ protected:
     Enum_Gimbal_Status Class_Chariot::Get_Gimbal_Status(){
         return Gimbal_Status;
     }   
+    #endif
+    #ifdef Only_Chassis
+    /**
+     * @brief 获取前一帧底盘控制类型
+     * 
+     * @return Enum_Chassis_Control_Type 前一帧底盘控制类型
+     */
 
+    Enum_Chassis_Control_Type Class_Chariot::Get_Pre_Chassis_Control_Type()
+    {
+        return (Pre_Chassis_Control_Type);
+    }
+    /**
+     * @brief 设置前一帧底盘控制类型
+     * 
+     * @param __Chassis_Control_Type 前一帧底盘控制类型
+     */
+    void Class_Chariot::Set_Pre_Chassis_Control_Type(Enum_Chassis_Control_Type __Chassis_Control_Type)
+    {
+        Pre_Chassis_Control_Type = __Chassis_Control_Type;
+    }
+    #endif
+    float Class_Chariot::Get_Gimbal_Yaw_IMU_Angle()
+    {
+        return (Yaw_IMU_Angle);
+    }
+    void Class_Chariot::Set_Gimbal_Yaw_Angle(float __Angle)
+    {
+        Yaw_IMU_Angle = __Angle;
+    }
+    void Class_Chariot::Set_Gimbal_Pitch_Angle(float __Angle)
+    {
+        Pitch_IMU_Angle = __Angle;
+    }
+    /**
+    * @brief 设置云台跟随偏移角度
+    * 
+    */
+    void Class_Chariot::Set_Chassis_Reference_Angle(float __Reference_Angle)
+    {
+        Reference_Angle = __Reference_Angle;
+    }
+    
 #endif
 
 #endif

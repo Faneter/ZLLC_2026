@@ -70,7 +70,30 @@ void Chassis_Device_CAN1_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 {
     switch (CAN_RxMessage->Header.Identifier)
     {
-        #ifdef AGV
+        #ifdef TRACK_LEG
+        case (0x201):
+        {
+            chariot.Chassis.Motor_Wheel[0].CAN_RxCpltCallback(CAN_RxMessage->Data);
+        }
+        break;
+        case (0x202):
+        {
+            chariot.Chassis.Motor_Wheel[1].CAN_RxCpltCallback(CAN_RxMessage->Data);
+        }
+        break;
+        case (0x203):
+        {
+            chariot.Chassis.Motor_Wheel[2].CAN_RxCpltCallback(CAN_RxMessage->Data);
+        }
+        break;
+        case (0x204):
+        {
+            chariot.Chassis.Motor_Wheel[3].CAN_RxCpltCallback(CAN_RxMessage->Data);
+        }
+        break;
+        #endif
+
+        #ifdef OLD
         case (0x201):
         {
             chariot.Chassis.Motor_Wheel[0].CAN_RxCpltCallback(CAN_RxMessage->Data);
@@ -115,19 +138,23 @@ void Chassis_Device_CAN1_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
         }
         break;
         #endif
-
-        case (0x150):  
+        #ifdef AGV
+         case (0x205):  //留给yaw电机编码器回传 用于底盘随动
         {
-            
-            
-
+            chariot.Motor_Yaw.CAN_RxCpltCallback(CAN_RxMessage->Data);
         }
         break;
-        case (0x207):
+        case (0x77):  //留给上板通讯
         {
-            
+            chariot.CAN_Chassis_Rx_Gimbal_Callback();
         }
         break;
+        case (0x67):  //留给超级电容
+        {
+            chariot.Chassis.Supercap.CAN_RxCpltCallback(CAN_RxMessage->Data);
+        }
+        break;
+        #endif
     }
 }
 #endif
@@ -141,25 +168,15 @@ void Chassis_Device_CAN2_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 {
     switch (CAN_RxMessage->Header.Identifier)
     {
-
-<<<<<<< HEAD
+    #ifdef OLD
         case (0x205):
         {
             chariot.Chassis.Motor_Steer[0].CAN_RxCpltCallback(CAN_RxMessage->Data);
-=======
-        case (0x208):
-        {
-            chariot.Chassis.Motor_Steer[1].CAN_RxCpltCallback(CAN_RxMessage->Data);
->>>>>>> d28e22f2ed8b8045d8d1979d840f7161714beda0
         }
         break;
         case (0x206):
         {
-<<<<<<< HEAD
             chariot.Chassis.Motor_Steer[1].CAN_RxCpltCallback(CAN_RxMessage->Data);
-=======
-            chariot.Chassis.Motor_Steer[0].CAN_RxCpltCallback(CAN_RxMessage->Data);
->>>>>>> d28e22f2ed8b8045d8d1979d840f7161714beda0
         }
         break;
         case (0x207):
@@ -167,16 +184,11 @@ void Chassis_Device_CAN2_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
             chariot.Chassis.Motor_Steer[2].CAN_RxCpltCallback(CAN_RxMessage->Data);
         }
         break;
-<<<<<<< HEAD
         case (0x208):
-=======
-        case (0x205):
->>>>>>> d28e22f2ed8b8045d8d1979d840f7161714beda0
         {
             chariot.Chassis.Motor_Steer[3].CAN_RxCpltCallback(CAN_RxMessage->Data);
         }
         break;
-<<<<<<< HEAD
         case(0xD1):
         {
             chariot.Chassis.Motor_Steer[0].MA600_Data_Process(CAN_RxMessage);
@@ -196,9 +208,9 @@ void Chassis_Device_CAN2_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
         {
             chariot.Chassis.Motor_Steer[3].MA600_Data_Process(CAN_RxMessage);
         }
-        break;       
-=======
->>>>>>> d28e22f2ed8b8045d8d1979d840f7161714beda0
+        break; 
+    #endif      
+    #ifdef AGV
         case (0x67)://超电接收
         {
             chariot.Chassis.Supercap.CAN_RxCpltCallback(CAN_RxMessage->Data);
@@ -209,7 +221,19 @@ void Chassis_Device_CAN2_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
             chariot.Chassis.Supercap.CAN_RxCpltCallback(CAN_RxMessage->Data);
             break;
         }
-
+    #endif    
+    #ifdef TRACK_LEG
+        case(0xFB):
+        {
+            chariot.Chassis.Motor_Joint[0].CAN_RxCpltCallback(CAN_RxMessage->Data);
+            break;
+        }
+        case(0xFC):
+        {
+            chariot.Chassis.Motor_Joint[1].CAN_RxCpltCallback(CAN_RxMessage->Data);
+            break;
+        }
+    #endif
     }
 }
 #endif
@@ -218,14 +242,17 @@ void Chassis_Device_CAN2_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 void Chassis_Device_CAN3_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage){
     switch (CAN_RxMessage->Header.Identifier)
     {
-        case (0x77)://留给上板通讯
+        #ifdef OLD
+        
+        case (0x95):
         {
             chariot.CAN_Chassis_Rx_Gimbal_Callback(CAN_RxMessage->Data);
             break;
         }
-        case (0x95):
+        #endif
+        case (0x77)://留给上板通讯
         {
-            chariot.CAN_Chassis_Rx_Gimbal_Callback(CAN_RxMessage->Data);
+            chariot.CAN_Chassis_Rx_Gimbal_Callback();
             break;
         }
         
@@ -242,15 +269,45 @@ void Gimbal_Device_CAN1_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 {
     switch (CAN_RxMessage->Header.Identifier)
     {
-<<<<<<< HEAD
     case (0x10):
     {
         chariot.Gimbal.Motor_Yaw_DM4310.CAN_RxCpltCallback(CAN_RxMessage->Data);
     }
     break;
-=======
-
->>>>>>> d28e22f2ed8b8045d8d1979d840f7161714beda0
+    #ifdef Single_Friction
+    case (0x201):
+    {
+        chariot.Booster.Motor_Friction_Right.CAN_RxCpltCallback(CAN_RxMessage->Data);
+    }
+    break;
+    case (0x203):
+    {
+        chariot.Booster.Motor_Friction_Left.CAN_RxCpltCallback(CAN_RxMessage->Data);
+    }
+    break;
+    #endif
+    #ifdef Double_Friction
+    case (0x201):
+    {
+        chariot.Booster.Fric[0].CAN_RxCpltCallback(CAN_RxMessage->Data);
+    }
+    break;
+    case (0x202):
+    {
+        chariot.Booster.Fric[1].CAN_RxCpltCallback(CAN_RxMessage->Data);
+    }
+	break;
+    case (0x203):
+    {
+        chariot.Booster.Fric[2].CAN_RxCpltCallback(CAN_RxMessage->Data);
+    }
+    break;
+    case (0x204):
+    {
+        chariot.Booster.Fric[3].CAN_RxCpltCallback(CAN_RxMessage->Data);
+    }
+    break;
+    #endif
 	}
 }
 #endif
@@ -265,20 +322,11 @@ void Gimbal_Device_CAN2_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 {
     switch (CAN_RxMessage->Header.Identifier)
     {
-<<<<<<< HEAD
-    case (0x201):
+    case (0xFB):
     {
-        chariot.Booster.Motor_Friction_Right.CAN_RxCpltCallback(CAN_RxMessage->Data);
+        chariot.Gimbal.Joint_Test.CAN_RxCpltCallback(CAN_RxMessage->Data);
+        break;
     }
-    break;
-    case (0x203):
-    {
-        chariot.Booster.Motor_Friction_Left.CAN_RxCpltCallback(CAN_RxMessage->Data);
-    }
-    break;
-=======
-
->>>>>>> d28e22f2ed8b8045d8d1979d840f7161714beda0
     }
 		
 }
@@ -288,7 +336,11 @@ void Gimbal_Device_CAN2_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 void Gimbal_Device_CAN3_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage){
     switch (CAN_RxMessage->Header.Identifier)
     {
-
+    case (0x51): //留给下板通讯
+    {
+        chariot.CAN_Gimbal_Rx_Chassis_Callback();
+        break;
+    }
 	}
 }
 #endif
@@ -331,18 +383,18 @@ void Device_SPI2_Callback(uint8_t *Tx_Buffer, uint8_t *Rx_Buffer, uint16_t Lengt
 void DR16_UART5_Callback(uint8_t *Buffer, uint16_t Length)
 {
     chariot.DR16.DR16_UART_RxCpltCallback(Buffer);
-<<<<<<< HEAD
     //底盘 云台 发射机构 的控制策略
     chariot.TIM_Control_Callback();
-=======
-
-    // 底盘 云台 发射机构 的控制策略
-    if (chariot.DR16.Get_Image_Status() == Image_Status_DISABLE)
-    {
-        chariot.TIM_Control_Callback();
-    }
->>>>>>> d28e22f2ed8b8045d8d1979d840f7161714beda0
 }
+#endif
+#ifdef CHASSIS
+void DR16_UART5_Callback(uint8_t *Buffer, uint16_t Length)
+{
+    chariot.DR16.DR16_UART_RxCpltCallback(Buffer);
+    //底盘 云台 发射机构 的控制策略
+    chariot.TIM_Control_Callback();
+}
+
 #endif
 /**
  * @brief UART9遥控器回调函数
@@ -361,29 +413,6 @@ void VT13_UART_Callback(uint8_t *Buffer, uint16_t Length)
 #endif
 
 /**
-<<<<<<< HEAD
-=======
- * @brief UART9图传回调函数
- *
- * @param Buffer UART9收到的消息
- * @param Length 长度
- */
-#ifdef GIMBAL
-void Image_UART9_Callback(uint8_t *Buffer, uint16_t Length)
-{
-    chariot.DR16.Image_UART_RxCpltCallback(Buffer);
-
-    //底盘 云台 发射机构 的控制策略
-    if(Buffer[0] == 0xA9 && Buffer[1] == 0x53)
-    {
-        chariot.TIM_Control_Callback(); 
-    }
-}
-
-#endif
-
-/**
->>>>>>> d28e22f2ed8b8045d8d1979d840f7161714beda0
  * @brief IIC磁力计回调函数
  *
  * @param Buffer IIC收到的消息
@@ -406,15 +435,12 @@ void Referee_UART10_Callback(uint8_t *Buffer, uint16_t Length)
     chariot.Referee.UART_RxCpltCallback(Buffer,Length);
 }
 #endif
-<<<<<<< HEAD
 #ifdef GIMBAL
 void Referee_UART10_Callback(uint8_t *Buffer, uint16_t Length)
 {
     chariot.Referee.UART_RxCpltCallback(Buffer,Length);
 }
 #endif
-=======
->>>>>>> d28e22f2ed8b8045d8d1979d840f7161714beda0
 /**
  * @brief UART1超电回调函数
  *
@@ -516,12 +542,37 @@ void Task100us_TIM4_Callback()
     #endif
 }
 
+uint32_t Pre_Uart1_Flag = 0, Uart1_Flag = 0;
+void Power_Cale_UART_Callback(uint8_t *Buffer, uint16_t Length)
+{
+    int16_t tmp_power;
+    memcpy(&tmp_power,&Buffer[5],sizeof(int16_t));
+    chariot.Chassis.Supercap.Set_Power_Cale_Count((float)tmp_power/75.0f);
+
+    Uart1_Flag++;
+}
+void Uart1_Alive_Check(uint8_t *flag)//1为正常通信
+{
+    static uint8_t mod20 = 0;//50hz检查一次
+	mod20++;
+    if(mod20 == 20)
+    {
+        mod20 = 0;
+        if(Uart1_Flag == Pre_Uart1_Flag)
+            *flag = 0;
+        else
+            *flag = 1;
+            
+    }
+}
+
 
 
 /**
  * @brief TIM5任务回调函数
  *
  */
+uint8_t Uart1_Alive_Flag = 0;
 extern Referee_Rx_A_t CAN3_Chassis_Rx_Data_A;
 void Task1ms_TIM5_Callback()
 {
@@ -540,12 +591,28 @@ void Task1ms_TIM5_Callback()
         #ifdef GIMBAL
         chariot.FSM_Alive_Control.Reload_TIM_Status_PeriodElapsedCallback();
         #endif
+        #ifdef CHASSIS
+        #ifdef Only_Chassis
+        chariot.FSM_Alive_Control.Reload_TIM_Status_PeriodElapsedCallback();
+        #endif
+        #endif
         chariot.TIM_Calculate_PeriodElapsedCallback();
         
     /****************************** 驱动层回调函数 1ms *****************************************/ 
         //统一打包发送
         TIM_CAN_PeriodElapsedCallback();
         
+        #ifdef AGV
+        Uart1_Alive_Check(&Uart1_Alive_Flag);
+        memcpy(CAN1_0x01E_Tx_Data + 6,&Uart1_Alive_Flag,1);
+        #endif
+		if(huart1.ErrorCode)
+		{
+            HAL_UART_DMAStop(&huart1); // 停止以重启
+            //HAL_Delay(10); // 等待错误结束
+            HAL_UARTEx_ReceiveToIdle_DMA(&huart1, UART1_Manage_Object.Rx_Buffer, UART1_Manage_Object.Rx_Buffer_Length);
+		}
+        Uart1_Alive_Check(&Uart1_Alive_Flag);
         static int mod5 = 0,mod100 = 0,mod68 = 0;
         mod5++;
         mod100++;
@@ -597,7 +664,8 @@ extern "C" void Task_Init()
 
         //裁判系统
         UART_Init(&huart10, Referee_UART10_Callback, 128);//并未使用环形队列 尽量给长范围增加检索时间 减少丢包
-
+        UART_Init(&huart5, DR16_UART5_Callback, 18);
+        UART_Init(&huart1, Power_Cale_UART_Callback, 8+1);
         #ifdef POWER_LIMIT
 
 
@@ -619,11 +687,7 @@ extern "C" void Task_Init()
         //遥控器接收
         #ifdef USE_DR16
         UART_Init(&huart5, DR16_UART5_Callback, 18);
-<<<<<<< HEAD
 		    //UART_Init(&huart6, Image_UART6_Callback, 40);
-=======
-		UART_Init(&huart9, Image_UART9_Callback, 40);
->>>>>>> d28e22f2ed8b8045d8d1979d840f7161714beda0
         #elif defined(USE_VT13)
         UART_Init(&huart9, VT13_UART_Callback, 30);
         #endif
@@ -632,12 +696,9 @@ extern "C" void Task_Init()
         //上位机串口
         UART_Init(&huart8, MiniPC_UART_Callback, 56);
 
-<<<<<<< HEAD
         //裁判系统
         UART_Init(&huart10, Referee_UART10_Callback, 128);
 
-=======
->>>>>>> d28e22f2ed8b8045d8d1979d840f7161714beda0
     #endif
 
     //定时器循环任务
@@ -656,6 +717,7 @@ extern "C" void Task_Init()
 
     HAL_TIM_Base_Start_IT(&htim4);
     HAL_TIM_Base_Start_IT(&htim5);
+    HAL_TIM_PWM_Start(&htim12, TIM_CHANNEL_2);
 }
 
 /**

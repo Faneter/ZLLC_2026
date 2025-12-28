@@ -1,7 +1,7 @@
 /* USER CODE BEGIN Header */
 /**
   ******************************************************************************
-  * @file           : main.c
+ * @file      :main.c
   * @brief          : Main program body
   ******************************************************************************
   * @attention
@@ -21,10 +21,6 @@
 #include "dma.h"
 #include "fdcan.h"
 #include "iwdg.h"
-<<<<<<< HEAD
-=======
-#include "memorymap.h"
->>>>>>> d28e22f2ed8b8045d8d1979d840f7161714beda0
 #include "spi.h"
 #include "tim.h"
 #include "usart.h"
@@ -114,6 +110,7 @@ int main(void)
   MX_UART8_Init();
   MX_UART9_Init();
   MX_IWDG1_Init();
+  MX_TIM12_Init();
   /* USER CODE BEGIN 2 */
   Task_Init();
   /* USER CODE END 2 */
@@ -209,12 +206,7 @@ void Error_Handler(void)
   }
   /* USER CODE END Error_Handler_Debug */
 }
-<<<<<<< HEAD
 #ifdef USE_FULL_ASSERT
-=======
-
-#ifdef  USE_FULL_ASSERT
->>>>>>> d28e22f2ed8b8045d8d1979d840f7161714beda0
 /**
   * @brief  Reports the name of the source file and the source line number
   *         where the assert_param error has occurred.

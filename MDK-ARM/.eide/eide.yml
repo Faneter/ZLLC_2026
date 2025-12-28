@@ -341,7 +341,9 @@ targets:
         - .cmsis/include
         - RTE/_ZLLC_2026
         - ../DSP/Include
-      libList: []
+        - ../Middlewares/ST/ARM/DSP/Inc
+      libList:
+        - ../Middlewares/ST/ARM/DSP/Inc
     excludeList: []
     toolchain: AC6
     toolchainConfigMap:
