@@ -230,7 +230,7 @@ void Class_BoardC_BMI::Calibrate_MPU_Offset(IMU_Data_t *bmi088)
         bmi088->TempWhenCali = bmi088_raw_temp * BMI088_TEMP_FACTOR + BMI088_TEMP_OFFSET;
 
         caliCount++;
-    } while (gNormDiff > 0.5f ||
+    } while (gNormDiff > 0.2f ||
              fabsf(bmi088->gNorm - 9.8f) > 0.5f ||
              gyroDiff[0] > 0.15f ||
              gyroDiff[1] > 0.15f ||
