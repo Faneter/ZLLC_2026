@@ -918,24 +918,36 @@ void Class_Chariot::Control_Chassis()
             }
             #endif
             #ifdef AUTO_SWITCH
-            if(DR16.Get_Right_Switch() == DR16_Switch_Status_DOWN)
+            if(DR16.Get_Right_Switch() == DR16_Switch_Status_DOWN)//
             {
-                //开启履带驱动电机
+                //右拨杆向下,开启履带驱动电机
                 Chassis.Motor_Track[0].Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
                 Chassis.Motor_Track[1].Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
-                Chassis.Motor_Track[0].Set_Target_Omega_Radian(5.0f);
-                Chassis.Motor_Track[1].Set_Target_Omega_Radian(5.0f);
+                Chassis.Motor_Track[0].Set_Target_Omega_Radian(-PI2);
+                Chassis.Motor_Track[1].Set_Target_Omega_Radian(PI2);
             }
             else
             {
-                Chassis.Motor_Track[0].Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
-                Chassis.Motor_Track[1].Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
-                Chassis.Motor_Track[0].Set_Target_Omega_Radian(0.0f);
-                Chassis.Motor_Track[1].Set_Target_Omega_Radian(0.0f);
+                //关闭履带驱动电机
+                Chassis.Motor_Track[0].Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OPENLOOP);
+                Chassis.Motor_Track[1].Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OPENLOOP);
+                // Chassis.Motor_Track[0].Set_Target_Omega_Radian(0.0f);
+                // Chassis.Motor_Track[1].Set_Target_Omega_Radian(0.0f);
+                Chassis.Motor_Track[0].Set_Target_Torque(0.0f);
+                Chassis.Motor_Track[1].Set_Target_Torque(0.0f);
             }
-            if (DR16.Get_Right_Switch() == DR16_Switch_Status_TRIG_DOWN_MIDDLE)
+            //遥控器直接控制伸缩腿逻辑：从中到下状态-伸腿;从下到中状态-缩腿
+            if (DR16.Get_Right_Switch() == DR16_Switch_Status_TRIG_MIDDLE_DOWN)
             {
-                Chassis.Set_Pose_Control_Type(Pose_STANDBY);//缩腿
+                Chassis.Set_Pose_Control_Type(Pose_ENABLE);
+            }
+            else if (DR16.Get_Right_Switch() == DR16_Switch_Status_TRIG_DOWN_MIDDLE)
+            {
+                Chassis.Set_Pose_Control_Type(Pose_STANDBY);
+            }
+            if(DR16.Get_Right_Switch() == DR16_Switch_Status_UP)
+            {
+                Chassis.Set_Pose_Control_Type(Pose_DISABLE);//失能
             }
             #endif
         }
@@ -1569,6 +1581,7 @@ void Class_FSM_Alive_Control::Reload_TIM_Status_PeriodElapsedCallback()
             //离线保护
             Chariot->Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
             Chariot->Force_Control_Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE__);
+            Chariot->Chassis.Set_Pose_Control_Type(Pose_DISABLE);
 
             if(Chariot->DR16.Get_DR16_Status() == DR16_Status_ENABLE)
             {

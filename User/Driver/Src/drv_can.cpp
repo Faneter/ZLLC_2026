@@ -353,8 +353,8 @@ void TIM_CAN_PeriodElapsedCallback()
         mod5 = 0;
         
         #ifdef TRACK_LEG
-        CAN_Send_Data(&hfdcan2, 0x200, CAN2_0x200_Tx_Data, 8);//履带驱动电机
-        CAN_Send_Data(&hfdcan1, 0x200, CAN1_0x200_Tx_Data, 8);//3508 
+        CAN_Send_Data(&hfdcan2, 0x200, CAN2_0x200_Tx_Data, 8);//履带3508电机
+        CAN_Send_Data(&hfdcan1, 0x200, CAN1_0x200_Tx_Data, 8);//行进3508电机
         #endif
         #ifdef AGV
         //6020
