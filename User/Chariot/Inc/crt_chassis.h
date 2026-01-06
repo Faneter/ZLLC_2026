@@ -389,6 +389,10 @@ protected:
     float Now_Velocity_Y = 0.0f;
     //当前角速度
     float Now_Omega = 0.0f;
+    //缩伸腿角度
+    float Set_Leg_Angle[2] = {0.0f,PI / 3.0f};
+    //缩伸腿速度
+    float Set_Leg_Velocity[2] = {PI,1.0f};
 
     //内部函数
     void Speed_Resolution();
@@ -991,6 +995,7 @@ void Class_HybridTrackLeg_Chassis::Set_Supercap_Mode(Enum_Supercap_Mode __Superc
 {
     Supercap_Mode = __Supercap_Mode;
 }
+
 #endif
 
 /************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/
