@@ -76,8 +76,8 @@ void Class_HybridTrackLeg_Chassis::Init(float __Velocity_X_Max, float __Velocity
     Motor_Joint[1].Init(&hfdcan2, DM_Motor_ID_0xA2, DM_Motor_Control_Method_POSITION_OMEGA);
 
     //履带驱动电机PID初始化
-    Motor_Track[0].PID_Omega.Init(3000.0f, 6.0f, 0.0f, 0.0f, Motor_Track[0].Get_Output_Max(), Motor_Track[0].Get_Output_Max());
-    Motor_Track[1].PID_Omega.Init(10.0f, 0.0f, 0.0f, 0.0f, Motor_Track[1].Get_Output_Max(), Motor_Track[1].Get_Output_Max());//需调参
+    Motor_Track[0].PID_Omega.Init(1000.0f, 400.0f, 0.0f, 0.0f, Motor_Track[0].Get_Output_Max(), Motor_Track[0].Get_Output_Max());
+    Motor_Track[1].PID_Omega.Init(1000.0f, 400.0f, 0.0f, 0.0f, Motor_Track[1].Get_Output_Max(), Motor_Track[1].Get_Output_Max());//需调参
     //履带电机ID初始化
     Motor_Track[0].Init(&hfdcan2,DJI_Motor_ID_0x201);
     Motor_Track[1].Init(&hfdcan2,DJI_Motor_ID_0x202);
@@ -652,8 +652,12 @@ void Class_HybridTrackLeg_Chassis::Switch_Pose()
     {
         case(Pose_DISABLE)://失能
     {
-        Motor_Joint[0].Set_DM_Control_Status(DM_Motor_Control_Status_DISABLE);
-        Motor_Joint[1].Set_DM_Control_Status(DM_Motor_Control_Status_DISABLE);
+        Motor_Joint[0].Set_DM_Control_Status(DM_Motor_Control_Status_ENABLE);
+        Motor_Joint[1].Set_DM_Control_Status(DM_Motor_Control_Status_ENABLE);
+        Motor_Joint[0].Set_Target_Angle(Set_Leg_Angle[0]);
+        Motor_Joint[0].Set_Target_Omega(Set_Leg_Velocity[0]);
+        Motor_Joint[1].Set_Target_Angle(Set_Leg_Angle[0]);
+        Motor_Joint[1].Set_Target_Omega(-Set_Leg_Velocity[0]);
         break;
     }
     case(Pose_STANDBY)://待机
@@ -672,10 +676,10 @@ void Class_HybridTrackLeg_Chassis::Switch_Pose()
         //     // Motor_Joint[i].Set_MIT_K_D(1.0f);
         // }
         //位置速度模式
-        Motor_Joint[0].Set_Target_Angle(0.0f);
-        Motor_Joint[0].Set_Target_Omega(1.0f);
-        Motor_Joint[1].Set_Target_Angle(0.0f);
-        Motor_Joint[1].Set_Target_Omega(-1.0f);
+        Motor_Joint[0].Set_Target_Angle(Set_Leg_Angle[0]);
+        Motor_Joint[0].Set_Target_Omega(Set_Leg_Velocity[0]);
+        Motor_Joint[1].Set_Target_Angle(Set_Leg_Angle[0]);
+        Motor_Joint[1].Set_Target_Omega(-Set_Leg_Velocity[0]);
         break;
     }
     case(Pose_ENABLE)://使能
@@ -685,10 +689,10 @@ void Class_HybridTrackLeg_Chassis::Switch_Pose()
         Motor_Joint[1].Set_DM_Control_Status(DM_Motor_Control_Status_ENABLE);
         //设定控制帧所需参数： 角度、角速度、t_ff、Kp、Kd
         //位置速度模式
-        Motor_Joint[0].Set_Target_Angle(PI / 3);
-        Motor_Joint[0].Set_Target_Omega(1.0f);
-        Motor_Joint[1].Set_Target_Angle(-PI / 3);
-        Motor_Joint[1].Set_Target_Omega(-1.0f);
+        Motor_Joint[0].Set_Target_Angle(Set_Leg_Angle[1]);
+        Motor_Joint[0].Set_Target_Omega(Set_Leg_Velocity[1]);
+        Motor_Joint[1].Set_Target_Angle(-Set_Leg_Angle[1]);
+        Motor_Joint[1].Set_Target_Omega(-Set_Leg_Velocity[1]);
         //MIT模式
         // Motor_Joint[0].Set_Target_Angle(PI / 3);
         // Motor_Joint[0].Set_Target_Omega(0.0f);
@@ -704,13 +708,21 @@ void Class_HybridTrackLeg_Chassis::Switch_Pose()
     }
     }
     #endif
-    Motor_Joint[0].Set_DM_Control_Status(DM_Motor_Control_Status_ENABLE);
-    Motor_Joint[1].Set_DM_Control_Status(DM_Motor_Control_Status_ENABLE);
     //计算回调函数
+    static uint8_t mod5 = 0;
+    mod5++;
+    if (mod5 >= 5)
+    {
+        mod5 = 0;
+        for (int i = 0; i < 2; i++)
+        {
+            Motor_Track[i].TIM_PID_PeriodElapsedCallback();
+        }
+    }
+
     for(int i = 0; i < 2; i++)
     {
         Motor_Joint[i].TIM_Process_PeriodElapsedCallback();
-        Motor_Track[i].TIM_PID_PeriodElapsedCallback();
     }
 }
 #endif

@@ -315,6 +315,8 @@ protected:
         //写变量
         uint32_t Gimbal_Alive_Flag = 0;
         uint32_t Pre_Gimbal_Alive_Flag = 0;
+        //履带的角速度
+        float Target_Track_Omega = 10.0f;
 
         Enum_Gimbal_Status Gimbal_Status =  Gimbal_Status_DISABLE;
         

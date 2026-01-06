@@ -240,10 +240,12 @@ void Chassis_Device_CAN2_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
         case(0x201):
         {
             chariot.Chassis.Motor_Track[0].CAN_RxCpltCallback(CAN_RxMessage->Data);
+            break;
         }
         case(0x202):
         {
             chariot.Chassis.Motor_Track[1].CAN_RxCpltCallback(CAN_RxMessage->Data);
+            break;
         }
     #endif
     }

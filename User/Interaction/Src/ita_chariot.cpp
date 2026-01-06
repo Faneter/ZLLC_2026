@@ -903,8 +903,8 @@ void Class_Chariot::Control_Chassis()
                 chassis_omega = -Chassis.Get_Spin_Omega();
             }
         }
-        if (DR16.Get_Left_Switch() == DR16_Switch_Status_DOWN) //左下 位姿切换
-        {
+        // if (DR16.Get_Left_Switch() == DR16_Switch_Status_DOWN) //左下 位姿切换
+        // {
             // 底盘随动
             Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_FLLOW);
             #ifdef LOCKED_SWITCH
@@ -918,21 +918,19 @@ void Class_Chariot::Control_Chassis()
             }
             #endif
             #ifdef AUTO_SWITCH
-            if(DR16.Get_Right_Switch() == DR16_Switch_Status_DOWN)//
+            if(DR16.Get_Left_Switch() == DR16_Switch_Status_DOWN)//
             {
                 //右拨杆向下,开启履带驱动电机
                 Chassis.Motor_Track[0].Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
                 Chassis.Motor_Track[1].Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
-                Chassis.Motor_Track[0].Set_Target_Omega_Radian(-PI2);
-                Chassis.Motor_Track[1].Set_Target_Omega_Radian(PI2);
+                Chassis.Motor_Track[0].Set_Target_Omega_Radian(-Target_Track_Omega);
+                Chassis.Motor_Track[1].Set_Target_Omega_Radian(Target_Track_Omega);
             }
             else
             {
                 //关闭履带驱动电机
                 Chassis.Motor_Track[0].Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OPENLOOP);
                 Chassis.Motor_Track[1].Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OPENLOOP);
-                // Chassis.Motor_Track[0].Set_Target_Omega_Radian(0.0f);
-                // Chassis.Motor_Track[1].Set_Target_Omega_Radian(0.0f);
                 Chassis.Motor_Track[0].Set_Target_Torque(0.0f);
                 Chassis.Motor_Track[1].Set_Target_Torque(0.0f);
             }
@@ -950,7 +948,7 @@ void Class_Chariot::Control_Chassis()
                 Chassis.Set_Pose_Control_Type(Pose_DISABLE);//失能
             }
             #endif
-        }
+        // }
         Chassis.Set_Target_Velocity_X(chassis_velocity_x);
         Chassis.Set_Target_Velocity_Y(chassis_velocity_y);
         Chassis.Set_Target_Omega(chassis_omega);
