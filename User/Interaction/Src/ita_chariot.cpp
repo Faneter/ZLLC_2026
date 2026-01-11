@@ -649,7 +649,7 @@ void Class_Chariot::Chassis_Test_Control()
         {
             for (int i = 0; i < 4; i++)
             {
-                target_uplift_rad[i] -= PI * 0.01f;
+                target_uplift_rad[i] -= PI * 0.04f;
             }
             break;
         }
@@ -669,7 +669,7 @@ void Class_Chariot::Chassis_Test_Control()
         {
             for (int i = 0; i < 4; i++)
             {
-                target_uplift_rad[i] += PI * 0.01f;
+                target_uplift_rad[i] += PI * 0.04f;
             }
             break;
         }
@@ -678,7 +678,7 @@ void Class_Chariot::Chassis_Test_Control()
         {
             for (int i = 0; i < 4; i++)
             {
-                target_uplift_rad[i] -= PI * 0.01f;
+                target_uplift_rad[i] -= PI * 0.04f;
             }
             break;
         }

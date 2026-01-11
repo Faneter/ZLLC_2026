@@ -503,10 +503,11 @@ public:
     
     inline bool Get_Uplift_cali_status(uint8_t index);
 
+    bool uplift_cali = false;
 protected:
     /*抬升校准状态机相关变量*/
     float uplift_offset[4] = {0.0f};
-    float uplift_cali_torque = 10000.0f;       //待测
+    float uplift_cali_torque = 10000.0f;
     bool uplift_cali_status[4] = {false};
 
     uint16_t uplift_locked_cnt[4] = {0};// 抬升堵转时间计数

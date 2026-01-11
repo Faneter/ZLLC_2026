@@ -439,12 +439,12 @@ void Class_Mecanum_Chassis::Init(float __Velocity_X_Max, float __Velocity_Y_Max,
     // Mecanum_Wheels[1].PID_Omega.Init(800.0f, 0.0f, 0.0f, 0.0f, Mecanum_Wheels[1].Get_Output_Max(), Mecanum_Wheels[1].Get_Output_Max());
     // Mecanum_Wheels[2].PID_Omega.Init(800.0f, 0.0f, 0.0f, 0.0f, Mecanum_Wheels[2].Get_Output_Max(), Mecanum_Wheels[2].Get_Output_Max());
     // Mecanum_Wheels[3].PID_Omega.Init(800.0f, 0.0f, 0.0f, 0.0f, Mecanum_Wheels[3].Get_Output_Max(), Mecanum_Wheels[3].Get_Output_Max());
-    
+
     // 抬升电机PID初始化
-    for(int i = 0; i < 4; i++)
+    for (int i = 0; i < 4; i++)
     {
         Uplift_Motor[i].PID_Omega.Init(1200.0f, 0.0f, 0.0f, 0.0f, Uplift_Motor[i].Get_Output_Max(), Uplift_Motor[i].Get_Output_Max());
-        Uplift_Motor[i].PID_Angle.Init(4.5f, 0.0f, 0.0f, 0.0f,0.0f, 7.0f * PI);
+        Uplift_Motor[i].PID_Angle.Init(4.5f, 0.0f, 0.0f, 0.0f, 0.0f, 6.0f * PI);
     }
 
     // // 麦轮轮组电机ID初始化
@@ -462,7 +462,7 @@ void Class_Mecanum_Chassis::Init(float __Velocity_X_Max, float __Velocity_Y_Max,
     // 主动轮电机ID初始化
     Track_Motor[0].Init(&hfdcan2, DM_Motor_ID_0xA1, DM_Motor_Control_Method_OMEGA);
     Track_Motor[1].Init(&hfdcan2, DM_Motor_ID_0xA2, DM_Motor_Control_Method_OMEGA);
-    
+
     // 底盘控制方式初始化
     Chassis_Control_Type = Chassis_Control_Type_DISABLE;
 
@@ -565,10 +565,11 @@ void Class_Mecanum_Chassis::Speed_Resolution()
 
 void Class_Mecanum_Chassis::Output()
 {
-    if(Chassis_Control_Type == Chassis_Control_Type_DISABLE)
+    if (Chassis_Control_Type == Chassis_Control_Type_DISABLE)
     {
         // 抬升电机
-        for(int i = 0; i < 4; i++){
+        for (int i = 0; i < 4; i++)
+        {
             Uplift_Motor[i].Set_Out(0.0f);
         }
 
@@ -579,12 +580,19 @@ void Class_Mecanum_Chassis::Output()
     else
     {
         // 抬升电机
-        for(int i = 0; i < 4; i++)
+        if (Calibration_FSM.uplift_cali)
         {
-            Uplift_Motor[i].Set_Target_Radian(Target_Uplift_Motor_Radian[i]);
+            for (int i = 0; i < 4; i++)
+            {
+                Uplift_Motor[i].Set_Target_Radian(Target_Uplift_Motor_Radian[i]);
+            }
+        }
+        else
+        {
+            Calibration_FSM.Reload_TIM_Status_PeriodElapsedCallback();
         }
 
-        for(int i = 0; i < 4; i++)
+        for (int i = 0; i < 4; i++)
         {
             Uplift_Motor[i].TIM_PID_PeriodElapsedCallback();
         }
@@ -596,7 +604,6 @@ void Class_Mecanum_Chassis::Output()
         Track_Motor[1].Set_DM_Control_Status(DM_Motor_Control_Status_ENABLE);
         Track_Motor[1].Set_Target_Omega(-Target_Track_Omega);
     }
-
 }
 
 /**
@@ -650,7 +657,7 @@ void Class_Mecanum_Chassis::TIM_Calculate_PeriodElapsedCallback(Enum_Sprint_Stat
 }
 
 /**
- * @brief 单编码器电机校准状态机
+ * @brief 单增量式编码器电机校准状态机
  *
  */
 void Class_FSM_Calibration_Chassis::Reload_TIM_Status_PeriodElapsedCallback()
@@ -661,26 +668,27 @@ void Class_FSM_Calibration_Chassis::Reload_TIM_Status_PeriodElapsedCallback()
     case (0):
         /*校准状态*/
         {
-            bool all_cali_status = true;
-            for(int i = 0; i < 4; i++)
+            bool uplift_all_cali_status = true;
+            for (int i = 0; i < 4; i++)
             {
-                if(Chassis->Uplift_Motor[i].Get_DJI_Motor_Status() == DJI_Motor_Status_ENABLE && !uplift_cali_status[i])
+                if (Chassis->Uplift_Motor[i].Get_DJI_Motor_Status() == DJI_Motor_Status_ENABLE && !uplift_cali_status[i])
                 {
                     uplift_cali_status[i] = Motor_Calibration(Chassis->Uplift_Motor + i, i, uplift_cali_torque, uplift_locked_cnt[i]);
                 }
 
-                if(uplift_cali_status[i])
+                if (uplift_cali_status[i])
                 {
-                    Chassis->Uplift_Max_Radian[i] = uplift_offset[i] - 2.0f;
+                    Chassis->Uplift_Max_Radian[i] = uplift_offset[i] - 0.1f;
                     Chassis->Uplift_Min_Radian[i] = Chassis->Uplift_Max_Radian[i] - (i < 2 ? 26.5f : 20.0f);
                 }
 
-                all_cali_status = all_cali_status && uplift_cali_status[i];
+                uplift_all_cali_status = uplift_all_cali_status && uplift_cali_status[i];
             }
 
-            if(all_cali_status)
+            if (uplift_all_cali_status)
             {
                 Set_Status(1);
+                uplift_cali = true;
             }
 
             break;
@@ -689,14 +697,15 @@ void Class_FSM_Calibration_Chassis::Reload_TIM_Status_PeriodElapsedCallback()
         /*校准完成状态*/
         {
             bool online_status = true;
-            for(int i = 0; i < 4; i++)
+            for (int i = 0; i < 4; i++)
             {
                 online_status = online_status && (Chassis->Uplift_Motor[i].Get_DJI_Motor_Status() == DJI_Motor_Status_ENABLE);
             }
 
-            if(!online_status)
+            if (!online_status)
             {
                 Set_Status(0);
+                uplift_cali = false;
             }
 
             break;
@@ -722,7 +731,7 @@ bool Class_FSM_Calibration_Chassis::Motor_Calibration(Class_DJI_Motor_C620 *Moto
 
             uplift_offset[i] = Motor->Get_Now_Radian();
 
-            Motor->Set_Target_Radian(uplift_offset[i] - 2.0f); // 校准完成后稍微松开一点，避免一直堵转，校准是往张开的方向动的，所以这里往加紧的方向动一下
+            Motor->Set_Target_Radian(uplift_offset[i] - 0.1f);
 
             return true;
         }
