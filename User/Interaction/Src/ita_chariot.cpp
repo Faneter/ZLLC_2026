@@ -479,9 +479,10 @@ void Class_Chariot::Chassis_Test_Control()
     float dr16_l_x, dr16_l_y, dr16_r_x, dr16_r_y;
     // 底盘坐标系速度目标值 float
     float chassis_velocity_x = 0, chassis_velocity_y = 0;
-    float chassis_omega = 0;
     float target_uplift_rad[4] = {0.0f};
     float track_omega = 0.0f;
+
+    float chassis_radian = Force_Chassis.Get_Target_Radian();
 
     // 获取当前的抬升机构高度用于做增量
     for (int i = 0; i < 4; i++)
@@ -533,7 +534,7 @@ void Class_Chariot::Chassis_Test_Control()
     { // 失能
         chassis_velocity_x = 0;
         chassis_velocity_y = 0;
-        chassis_omega = 0;
+        chassis_radian = chassis_radian;
         track_omega = 0.0f;
         break;
     }
@@ -544,7 +545,7 @@ void Class_Chariot::Chassis_Test_Control()
         {
             chassis_velocity_y = -dr16_l_x * sqrt(1.0f - dr16_l_y * dr16_l_y / 2.0f) * 1.0f;
             chassis_velocity_x = dr16_l_y * sqrt(1.0f - dr16_l_x * dr16_l_x / 2.0f) * 1.0f;
-            chassis_omega = -dr16_r_x * sqrt(1.0f - dr16_r_x * dr16_r_x / 2.0f) * 1.0f;
+            chassis_radian += -dr16_r_x * sqrt(1.0f - dr16_r_x * dr16_r_x / 2.0f) * 0.005f;
 
             track_omega = dr16_r_y * sqrt(1.0f - dr16_r_y * dr16_r_y / 2.0f) * 25.0f;
         }
@@ -554,7 +555,7 @@ void Class_Chariot::Chassis_Test_Control()
             // 设定矩形到圆形映射进行控制，velocity_x为前，velocity_y为左
             chassis_velocity_y = -dr16_l_x * sqrt(1.0f - dr16_l_y * dr16_l_y / 2.0f) * Chassis.Get_Velocity_X_Max();
             chassis_velocity_x = dr16_l_y * sqrt(1.0f - dr16_l_x * dr16_l_x / 2.0f) * Chassis.Get_Velocity_Y_Max();
-            chassis_omega = -dr16_r_x * sqrt(1.0f - dr16_r_x * dr16_r_x / 2.0f) * Chassis.Get_Omega_Max();
+            chassis_radian += -dr16_r_x * sqrt(1.0f - dr16_r_x * dr16_r_x / 2.0f) * 0.01f;
 
             track_omega = dr16_r_y * sqrt(1.0f - dr16_r_y * dr16_r_y / 2.0f) * 25.0f;
         }
@@ -563,21 +564,21 @@ void Class_Chariot::Chassis_Test_Control()
         {
             chassis_velocity_x = 0.0f;
             chassis_velocity_y = 0.0f;
-            chassis_omega = 0.0f;
+            chassis_radian = chassis_radian;
             track_omega = 0.0f;
         }
         break;
     }
     }
-    float Max_Omega = Chassis.Get_Omega_Max();
-    if (chassis_omega > Max_Omega)
-        chassis_omega = Max_Omega;
-    if (chassis_omega < -Max_Omega)
-        chassis_omega = -Max_Omega;
+
+    if (chassis_radian > PI)
+        chassis_radian -= 2 * PI;
+    if (chassis_radian < -PI)
+        chassis_radian += 2 * PI;
 
     Force_Chassis.Set_Target_Velocity_X(chassis_velocity_x);
     Force_Chassis.Set_Target_Velocity_Y(chassis_velocity_y); // 前x左y正
-    Force_Chassis.Set_Target_Omega(chassis_omega);
+    Force_Chassis.Set_Target_Radian(chassis_radian);
 
     Chassis.Set_Target_Track_Omega(track_omega);
 
