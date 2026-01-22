@@ -389,7 +389,7 @@ void Task100us_TIM4_Callback()
 
     #elif defined(GIMBAL)
         // 单给IMU消息开的定时器 ims
-        //chariot.Gimbal.Boardc_BMI.TIM_Calculate_PeriodElapsedCallback();  
+        chariot.Gimbal.Boardc_BMI.TIM_Calculate_PeriodElapsedCallback();  
 
         static uint8_t mod2 = 0;
         mod2++;
