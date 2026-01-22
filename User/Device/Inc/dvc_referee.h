@@ -1236,8 +1236,6 @@ public:
     inline void Set_Game_Stage(Enum_Referee_Game_Status_Stage __Game_Stage);  
     inline void Set_Booster_17mm_1_Heat_CD(uint16_t __Booster_17mm_1_Heat_CD);
     inline void Set_Booster_17mm_1_Heat_Max(uint16_t __Booster_17mm_1_Heat_Max);
-    inline void Set_Sentry_Revive_Status(Enum_Sentry_Revive_Status __Sentry_Revive_Status);
-    inline void Set_Sentry_Revive_Buy_Status(Enum_Sentry_Revive_Status __Sentry_Revive_Buy_Status);
     #endif
 
     inline Struct_Referee_Data_Interaction_Graphic_Config *Set_Referee_UI_Clear(uint8_t Layer_Num, uint8_t Graphic_Num);
@@ -2313,29 +2311,6 @@ void Class_Referee::Set_Booster_17mm_1_Heat_Max(uint16_t __Booster_17mm_1_Heat_M
 }
 #endif
 
-/**
- * @brief 设置哨兵复活状态
- *
- * @param __Sentry_Revive_Status 复活模式
- */
-#ifdef GIMBAL
-void Class_Referee::Set_Sentry_Revive_Status(Enum_Sentry_Revive_Status __Sentry_Revive_Status)
-{
-    Sentry_cmd.sentry_cmd = (Sentry_cmd.sentry_cmd & ~ 0x1u) | (static_cast<uint32_t>(__Sentry_Revive_Status) & 0x1u);
-}
-#endif
-
-/**
- * @brief 设置哨兵买活状态
- *
- * @param __Sentry_Revive_Status 买活模式
- */
-#ifdef GIMBAL
-void Class_Referee::Set_Sentry_Revive_Buy_Status(Enum_Sentry_Revive_Status __Sentry_Revive_Status)
-{
-    Sentry_cmd.sentry_cmd = (Sentry_cmd.sentry_cmd & ~ 0x2u) | ((static_cast<uint32_t>(__Sentry_Revive_Status ) & 0x2u) << 1);
-}
-#endif
 /**
  * @brief 设定裁判系统UI清除
  *
