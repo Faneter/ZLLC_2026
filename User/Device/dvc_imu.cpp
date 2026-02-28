@@ -26,7 +26,7 @@ void Class_IMU::Init()
     IMU_MahonyAHRS.init(INS_Quat);
  
     //EKF初始化
-    IMU_QuaternionEKF_Init(10, 0.001, 10000000, 1, 0 ,&QEKF_INS);
+    IMU_QuaternionEKF_Init(10, 0.001, 10000000, 1, 0 , 0.0f, &QEKF_INS);
 
     INS.AccelLPF = 0.0085;
 

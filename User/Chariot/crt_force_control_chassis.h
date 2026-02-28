@@ -9,6 +9,7 @@
 #include "kalman_filter.h"
 #include "alg_filter.h"
 #include "alg_slope.h"
+#include "my_kalman.h"
 /**
  * @brief 底盘控制类型
  *
@@ -16,7 +17,9 @@
 enum Enum_Chassis_Control_Type__
 {
     Chassis_Control_Type_DISABLE__ = 0,
-    Chassis_Control_Type_NORMAL__,
+    Chassis_Control_Type_FLLOW__,
+    Chassis_Control_Type_SPIN__,
+    Chassis_Control_Type_ANTI_SPIN__,
 };
 
 struct Struct_Chassis_INS_Data
@@ -56,11 +59,6 @@ public:
     //超电
     Class_Supercap Supercap;
 
-    //低通滤波器
-    Class_Filter_Fourier Acceleration_X_Filter;
-    Class_Filter_Fourier Acceleration_Y_Filter;
-    Class_Filter_Fourier Gyro_Z_Filter;
-
     Class_Filter_Fourier PID_Velocity_Filter[2];
     Class_Filter_Fourier PID_Omega_Filter;
 
@@ -70,6 +68,13 @@ public:
     Class_Slope Slope_Velocity_Y;
     // 斜坡函数加减速角速度
     Class_Slope Slope_Omega;
+    
+    // 卡尔曼滤波器
+    my_kalman kalman_MotionAccel_nx;
+    my_kalman kalman_MotionAccel_ny;
+    my_kalman kalman_Now_VelocityX;
+    my_kalman kalman_Now_VelocityY;
+    my_kalman kalman_Now_VelocityZ;
 
     inline float Get_Now_Motor_Power();
 
@@ -121,6 +126,7 @@ public:
     void TIM_100ms_Alive_PeriodElapsedCallback();
     void TIM_2ms_Resolution_PeriodElapsedCallback();
     void TIM_2ms_Control_PeriodElapsedCallback();
+    void TIM_1ms_Kalmancale_PeriodElapsedCallback();
 protected:
     const float Wheel_Radius = 0.154f/2.0f; // 轮子半径
     const float Wheel_To_Core_Distance = 0.18466f; // 轮投影点距离中心距离

@@ -80,7 +80,7 @@ class Class_IMU
     float Get_Gyro_Yaw(void);
 
     inline float Get_MotionAccel_b_x(void){return INS.MotionAccel_b[0];};
-
+    inline float Get_MotionAccel_b_y(void){return INS.MotionAccel_b[1];};
 
     Enum_IMU_Status Get_IMU_Status(void);
 
@@ -111,7 +111,7 @@ class Class_IMU
     float INS_Angle[3] = {0.0f, 0.0f, 0.0f};
 
     //重力加速度
-	const float Gravity[3] = {0, 0, 9.81f};
+	const float Gravity[3] = {0, 0, 9.722188f};
 
     //DWT计数
     float INS_DWT_Dt;

@@ -1,24 +1,35 @@
 #include "crt_force_control_chassis.h"
-
+//x方向
 KalmanFilter_t vaEstimateKF;	   // 卡尔曼滤波器结构体
+QEKF_INS_t vaEstimateQEKF;		   // 增量式卡尔曼滤波器结构体
+//y方向
+KalmanFilter_t vaEstimateKF_Y;	   // 卡尔曼滤波器结构体
+QEKF_INS_t vaEstimateQEKF_Y;		   // 增量式卡尔曼滤波器结构体
 
-float vaEstimateKF_F[4] = {1.0f, 0.002f, 
+float vaEstimateKF_F[4] = {1.0f, 0.001f, 
                            0.0f, 1.0f};	   // 状态转移矩阵，控制周期为0.002s
 
 float vaEstimateKF_P[4] = {1.0f, 0.0f,
                            0.0f, 1.0f};    // 后验估计协方差初始值
 
-float vaEstimateKF_Q[4] = {1.0f, 0.0f, 
-                           0.0f, 1.0f};    // Q矩阵初始值
+float vaEstimateKF_Q[4] = {0.5f, 0.0f, 
+                           0.0f, 200.0f};    // Q矩阵初始值
 
-float vaEstimateKF_R[4] = {2000.0f, 0.0f, 
-                            0.0f,  2000.0f}; 	
-														
+float vaEstimateKF_R[4] = {1000.0f, 0.0f, 
+                            0.0f,  0.001f}; 	
+// float vaEstimateKF_Q[4] = {0.5f, 0.0f, 
+//                            0.0f, 200.0f};    
+// // Q矩阵初始值     Q11减小更信任用加速度估计出来的速度，Q22增大，对加速度的滤波效果减小
+// //R11 增大R11减小对轮速的信任度，但是要足够大，太大了会造成转向结束震荡（因为转向时速度实际上应该更信任轮子，实际上是速度滞后太大了不收敛到真实的速度
+// //在不打滑的前提下，轮速应该是更准确的，所以在没问题的前提下应该更信任轮子
+// float vaEstimateKF_R[4] = {1000.0f, 0.0f, 
+//                             0.0f,  0.001f}; 	//v a观测噪声														
 float vaEstimateKF_K[4];
 													 
 const float vaEstimateKF_H[4] = {1.0f, 0.0f,
                                  0.0f, 1.0f};	// 设置矩阵H为常量
-float vel_acc[2];
+float vel_acc_X[2];
+float vel_acc_Y[2];
 /* Private types -------------------------------------------------------------*/
 
 void xvEstimateKF_Init(KalmanFilter_t *EstimateKF)
@@ -32,7 +43,7 @@ void xvEstimateKF_Init(KalmanFilter_t *EstimateKF)
     memcpy(EstimateKF->H_data, vaEstimateKF_H, sizeof(vaEstimateKF_H));
 }
 
-void xvEstimateKF_Update(KalmanFilter_t *EstimateKF ,float acc,float vel)
+void xvEstimateKF_Update(KalmanFilter_t *EstimateKF ,float acc,float vel,float *data)
 {   	
 	 memcpy(EstimateKF->Q_data, vaEstimateKF_Q, sizeof(vaEstimateKF_Q));
    memcpy(EstimateKF->R_data, vaEstimateKF_R, sizeof(vaEstimateKF_R));
@@ -42,12 +53,12 @@ void xvEstimateKF_Update(KalmanFilter_t *EstimateKF ,float acc,float vel)
     EstimateKF->MeasuredVector[1] = acc;//测量加速度
     		
     //卡尔曼滤波器更新函数
-    Kalman_Filter_Update(EstimateKF);
+    Kalman_Filter_Update(EstimateKF,&vaEstimateQEKF);
 
     // 提取估计值
     for (uint8_t i = 0; i < 2; i++)
     {
-      vel_acc[i] = EstimateKF->FilteredValue[i];
+      data[i] = EstimateKF->FilteredValue[i];
     }
 }
 
@@ -56,13 +67,13 @@ void Class_Chassis::Init()
     // PID初始化
 
     // 底盘速度xPID, 输出摩擦力
-    PID_Velocity_X.Init(500.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1000.0f, 0.002f);
+    PID_Velocity_X.Init(200.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1000.0f, 0.002f);
 
     // 底盘速度yPID, 输出摩擦力
-    PID_Velocity_Y.Init(500.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1000.0f, 0.002f);
+    PID_Velocity_Y.Init(200.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1000.0f, 0.002f);
 
     // 底盘角速度PID, 输出扭矩
-    PID_Omega.Init(50.0f, 0.0f, 0.0f, 0.0f, 0.0f, 100.0f, 0.002f);
+    PID_Omega.Init(20.0f, 0.0f, 0.0f, 0.0f, 0.0f, 100.0f, 0.002f);
 
     // 轮向电机ID初始化
    // 电机初始化
@@ -84,23 +95,28 @@ void Class_Chassis::Init()
     //imu初始化
     Boardc_BMI.Init();
     //低通滤波初始化
-    //加速度计
-    Acceleration_X_Filter.Init(-29.42f,+29.42f,Filter_Fourier_Type_LOWPASS,10.0f,0.0f,500.0f,30);
-    Acceleration_Y_Filter.Init(-29.42f,+29.42f,Filter_Fourier_Type_LOWPASS,10.0f,0.0f,500.0f,30);
-    Gyro_Z_Filter.Init(-20.0f,20.0f,Filter_Fourier_Type_LOWPASS,10.0f,0.0f,500.0f,30);
     //实际速度滤波
     PID_Velocity_Filter[0].Init(-4.0f,4.0f,Filter_Fourier_Type_LOWPASS,10.0f,0.0f,500.0f,5);
     PID_Velocity_Filter[1].Init(-4.0f,4.0f,Filter_Fourier_Type_LOWPASS,10.0f,0.0f,500.0f,5);
     PID_Omega_Filter.Init(-20.0f,20.0f,Filter_Fourier_Type_LOWPASS,10.0f,0.0f,500.0f,15);
 
+
     xvEstimateKF_Init(&vaEstimateKF);
     
+    xvEstimateKF_Init(&vaEstimateKF_Y);
+
    // 斜坡函数加减速速度X  控制周期1ms
     Slope_Velocity_X.Init(0.064f, 0.064f);
     // 斜坡函数加减速速度Y  控制周期1ms
     Slope_Velocity_Y.Init(0.064f, 0.064f);
     // 斜坡函数加减速角速度
     Slope_Omega.Init(0.1f, 0.1f);
+    //kalman滤波器初始化
+    kalman_Init(&kalman_MotionAccel_nx,0.9,0.005,0,1);
+    kalman_Init(&kalman_MotionAccel_ny,0.9,0.005,0,1);
+    kalman_Init(&kalman_Now_VelocityX,0.9,0.005,0,1);
+    kalman_Init(&kalman_Now_VelocityY,0.9,0.005,0,1);
+    kalman_Init(&kalman_Now_VelocityZ,0.9,0.005,0,1);
 }
 
 //#define Control_Type_Oemga
@@ -127,12 +143,6 @@ void Class_Chassis::TIM_2ms_Resolution_PeriodElapsedCallback()
 
     Self_Resolution();
     
-    // Acceleration_X_Filter.Set_Now(Boardc_BMI.Get_Accel_X());
-    // Acceleration_X_Filter.TIM_Adjust_PeriodElapsedCallback();     
-    // Acceleration_Y_Filter.Set_Now(Boardc_BMI.Get_Accel_Y());
-    // Acceleration_Y_Filter.TIM_Adjust_PeriodElapsedCallback();
-    // Gyro_Z_Filter.Set_Now(Boardc_BMI.Get_Gyro_Yaw());
-    // Gyro_Z_Filter.TIM_Adjust_PeriodElapsedCallback();
     PID_Velocity_Filter[0].Set_Now(Now_Velocity_X);
     PID_Velocity_Filter[0].TIM_Adjust_PeriodElapsedCallback(0.00f);
     PID_Velocity_Filter[1].Set_Now(Now_Velocity_Y);
@@ -156,6 +166,24 @@ void Class_Chassis::TIM_2ms_Resolution_PeriodElapsedCallback()
 
 }
 
+void Class_Chassis::TIM_1ms_Kalmancale_PeriodElapsedCallback()
+{
+    kalman_set_now(&kalman_MotionAccel_nx,Boardc_BMI.Get_MotionAccel_b_x());
+    Recv_Adjust_PeriodElapsedCallback(&kalman_MotionAccel_nx);
+    kalman_set_now(&kalman_MotionAccel_ny,Boardc_BMI.Get_MotionAccel_b_y());
+    Recv_Adjust_PeriodElapsedCallback(&kalman_MotionAccel_ny);
+    kalman_set_now(&kalman_Now_VelocityX,Now_Velocity_X);
+    Recv_Adjust_PeriodElapsedCallback(&kalman_Now_VelocityX);
+    kalman_set_now(&kalman_Now_VelocityY,Now_Velocity_Y);
+    Recv_Adjust_PeriodElapsedCallback(&kalman_Now_VelocityY);
+    kalman_set_now(&kalman_Now_VelocityZ,Now_Omega);
+    Recv_Adjust_PeriodElapsedCallback(&kalman_Now_VelocityZ);
+    //卡尔曼滤波器更新车体x方向速度
+    //1.加速度转换到机体系下
+    //2.
+    xvEstimateKF_Update(&vaEstimateKF,kalman_MotionAccel_nx.Out,kalman_Now_VelocityX.Out,vel_acc_X);
+    xvEstimateKF_Update(&vaEstimateKF_Y,kalman_MotionAccel_ny.Out,kalman_Now_VelocityY.Out,vel_acc_Y);
+}
 /**
  * @brief TIM定时器中断控制回调函数
  *
@@ -225,19 +253,29 @@ void Class_Chassis::Output_To_Dynamics()
 
         break;
     }
-    case (Chassis_Control_Type_NORMAL__):
+    case (Chassis_Control_Type_FLLOW__):
+    case (Chassis_Control_Type_SPIN__):
+    case (Chassis_Control_Type_ANTI_SPIN__):
     {
-
+        //小陀螺模式下以不用融合的速度：测试效果为底盘偏心转
         PID_Velocity_X.Set_Target(Slope_Velocity_X.Get_Out());
-        PID_Velocity_X.Set_Now(PID_Velocity_Filter[0].Get_Out());
-        PID_Velocity_X.TIM_Adjust_PeriodElapsedCallback();
-
         PID_Velocity_Y.Set_Target(Slope_Velocity_Y.Get_Out());
-        PID_Velocity_Y.Set_Now(PID_Velocity_Filter[1].Get_Out());
-        PID_Velocity_Y.TIM_Adjust_PeriodElapsedCallback();
-
         PID_Omega.Set_Target(Slope_Omega.Get_Out());
-        PID_Omega.Set_Now(Now_Omega);
+
+        if(Chassis_Control_Type == Chassis_Control_Type_FLLOW__)
+        {
+            PID_Velocity_X.Set_Now(vel_acc_X[0]);
+            PID_Velocity_Y.Set_Now(vel_acc_Y[0]);
+        }
+        else
+        {
+            PID_Velocity_X.Set_Now(kalman_Now_VelocityX.Out);
+            PID_Velocity_Y.Set_Now(kalman_Now_VelocityY.Out);
+        }
+        PID_Omega.Set_Now(kalman_Now_VelocityZ.Out);
+    
+        PID_Velocity_X.TIM_Adjust_PeriodElapsedCallback();
+        PID_Velocity_Y.TIM_Adjust_PeriodElapsedCallback();
         PID_Omega.TIM_Adjust_PeriodElapsedCallback();
 
         break;
@@ -311,7 +349,9 @@ void Class_Chassis::Output_To_Motor()
 
         break;
     }
-    case (Chassis_Control_Type_NORMAL__):
+    case (Chassis_Control_Type_FLLOW__):
+    case (Chassis_Control_Type_SPIN__):
+    case (Chassis_Control_Type_ANTI_SPIN__):
     {   
         #ifdef Control_Type_Current
         // 全向模型
@@ -416,30 +456,5 @@ void Class_Chassis::Self_Resolution()
         //Power_Management.Motor_Data[i].Target_error = fabs(Motor_Wheel[i].Get_Target_Omega_Radian() - Motor_Wheel[i].Get_Now_Omega_Radian());
         
     }
-    #ifdef  filter_complementary
-    //互补滤波-计算车体速度
-    //使用Imu的加速度做积分计算车体xy轴方向速度，同时在零速下清0
-    INS_Data.IMU_X_Velocity += Acceleration_X_Filter.Get_Out() * DWT_GetDeltaT(&imu_cnt_1);
-    INS_Data.IMU_Y_Velocity += Acceleration_Y_Filter.Get_Out() * DWT_GetDeltaT(&imu_cnt_2);
-    //直接用IMU的角速度作为车体角速度
-    INS_Data.IMU_Omega = Gyro_Z_Filter.Get_Out();
-    //互补滤波-计算车体角度
-    INS_Data.Mix_Velocity_X = Now_Velocity_X * alpha_v_adaptive  + INS_Data.IMU_X_Velocity * (1.0f - alpha_v_adaptive);
-    INS_Data.Mix_Velocity_Y = Now_Velocity_Y * alpha_v_adaptive  + INS_Data.IMU_Y_Velocity * (1.0f - alpha_v_adaptive);
-    INS_Data.Mix_Omega = Now_Omega * alpha_omega_adaptive  + INS_Data.IMU_Omega * (1.0f - alpha_omega_adaptive);
-    //反馈校正：用融合后的速度修正积分速度（抑制漂移的关键！）
-    //INS_Data.IMU_X_Velocity = INS_Data.Mix_Velocity_X;
-    //INS_Data.IMU_Y_Velocity = INS_Data.Mix_Velocity_Y;
-    //零速处理-可以添加IMU的角速度和加速度判断
-    if(fabs(Now_Velocity_X) < 0.01f && fabs(Now_Velocity_Y) < 0.01f && fabs(Now_Omega) < 0.01f)
-    {
-        INS_Data.Mix_Velocity_X = 0.0f;
-        INS_Data.Mix_Velocity_Y = 0.0f;
-        INS_Data.Mix_Omega = 0.0f;
-        INS_Data.IMU_X_Velocity = 0.0f;
-        INS_Data.IMU_Y_Velocity = 0.0f;
-    }
-    #endif
-
 
 }

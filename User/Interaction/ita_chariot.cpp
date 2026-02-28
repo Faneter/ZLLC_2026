@@ -134,7 +134,7 @@ void Class_Chariot::CAN_Chassis_Rx_Gimbal_Callback()
 
     // 获取云台坐标系和底盘坐标系的夹角（弧度制）
     Chassis_Angle = Motor_Yaw.Get_Now_Radian();
-    if (Chassis.Get_Chassis_Control_Type() == Chassis_Control_Type_SPIN)
+    if (chassis_control_type == Chassis_Control_Type_SPIN)
     {
         Offset_Angle = offset_k * Motor_Yaw.Get_Now_Omega_Radian();
     }
@@ -150,6 +150,7 @@ void Class_Chariot::CAN_Chassis_Rx_Gimbal_Callback()
     chassis_velocity_x = (float)(gimbal_velocity_x * cos(derta_angle) - gimbal_velocity_y * sin(derta_angle));
     chassis_velocity_y = (float)(gimbal_velocity_x * sin(derta_angle) + gimbal_velocity_y * cos(derta_angle));
 
+    #ifdef DEBUG_CHASSIS
     // 设定底盘控制类型
     Chassis.Set_Chassis_Control_Type(chassis_control_type);
 
@@ -172,15 +173,11 @@ void Class_Chariot::CAN_Chassis_Rx_Gimbal_Callback()
     // 设定底盘目标速度
     Chassis.Set_Target_Velocity_X(chassis_velocity_x);
     Chassis.Set_Target_Velocity_Y(chassis_velocity_y);
+    #endif
+    
     //力控底盘任务
-    if(chassis_control_type == Chassis_Control_Type_DISABLE)
-    {
-        Force_Control_Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE__);
-    }
-    else
-    {
-        Force_Control_Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_NORMAL__);
-    }
+    Force_Control_Chassis.Set_Chassis_Control_Type((Enum_Chassis_Control_Type__)chassis_control_type);
+
     Force_Control_Chassis.Set_Target_Velocity_X(chassis_velocity_y);
     Force_Control_Chassis.Set_Target_Velocity_Y(-chassis_velocity_x);
 }
@@ -1064,13 +1061,13 @@ void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
     JudgeReceiveData.Chassis_Gimbal_Diff = chassis_gimbal_diff;
 
     // 小陀螺 随动计算角速度
-    if (Chassis.Get_Chassis_Control_Type() == Chassis_Control_Type_SPIN)
+    if (Force_Control_Chassis.Get_Chassis_Control_Type() == Chassis_Control_Type_SPIN__)
     {
         Chassis.Set_Target_Omega(Chassis.Get_Spin_Omega());
         //补充力控底盘
         Force_Control_Chassis.Set_Target_Omega(10.0f);
     }
-    else if (Chassis.Get_Chassis_Control_Type() == Chassis_Control_Type_FLLOW)
+    else if (Force_Control_Chassis.Get_Chassis_Control_Type() == Chassis_Control_Type_FLLOW__)
     {
         // 随动yaw角度优化
         float temp_yaw, temp_reference;
@@ -1105,7 +1102,7 @@ void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
         PID_Chassis_Fllow.Set_Target(temp_yaw + angle_diff);
         PID_Chassis_Fllow.Set_Now(temp_yaw);
         PID_Chassis_Fllow.TIM_Adjust_PeriodElapsedCallback();
-        Chassis.Set_Target_Omega(PID_Chassis_Fllow.Get_Out());
+        //Chassis.Set_Target_Omega(PID_Chassis_Fllow.Get_Out());
         //补充力控底盘
         Force_Control_Chassis.Set_Target_Omega(PID_Chassis_Fllow.Get_Out());
     }
@@ -1121,7 +1118,8 @@ void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
         Force_Control_Chassis.TIM_2ms_Resolution_PeriodElapsedCallback();
         mod2 = 0;
     }
-
+    //1ms周期调用卡尔曼观测器
+    Force_Control_Chassis.TIM_1ms_Kalmancale_PeriodElapsedCallback();
 #elif defined(GIMBAL)
 
     static uint8_t mod2 = 0;

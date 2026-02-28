@@ -809,6 +809,11 @@
               <FileType>8</FileType>
               <FilePath>..\User\Middleware\Algorithm\alg_flying_slope.cpp</FilePath>
             </File>
+            <File>
+              <FileName>my_kalman.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\User\Middleware\Algorithm\my_kalman.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

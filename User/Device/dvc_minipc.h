@@ -264,10 +264,13 @@ struct Pack_rx_t
 #endif
 
 #ifdef MINIPC_COMM_CAN
-    int16_t target_x;
-    int16_t target_y;
-    int16_t target_z;
-    int8_t  Fire;
+    // int16_t target_x;
+    // int16_t target_y;
+    // int16_t target_z;
+    // int8_t  Fire;
+    int16_t yaw;
+    int16_t pitch;
+    int16_t Fire;
 #endif
 } __attribute__((packed));
 
