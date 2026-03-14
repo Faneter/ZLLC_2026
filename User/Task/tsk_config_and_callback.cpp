@@ -372,16 +372,16 @@ float delta_time;
 void Task100us_TIM2_Callback()
 {
 #ifdef CHASSIS
-    // GraphicSendtask();
-    // static uint16_t Referee_Sand_Cnt = 0;
-    // // //暂无云台tim4任务
-    // if (Referee_Sand_Cnt % 50 == 1)
-    // {
-    //     // Task_Loop();
-    //     Referee_Sand_Cnt = 0;
-    // }
+    GraphicSendtask();
+    static uint16_t Referee_Sand_Cnt = 0;
+    // //暂无云台tim4任务
+    if (Referee_Sand_Cnt % 50 == 1)
+    {
+        Task_Loop();
+        Referee_Sand_Cnt = 0;
+    }
 
-    // Referee_Sand_Cnt++;
+    Referee_Sand_Cnt++;
     //速控底盘的imu读取任务
     //chariot.Chassis.Boardc_BMI.TIM_Calculate_PeriodElapsedCallback();
     //力控底盘的Imu读取任务

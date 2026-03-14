@@ -249,6 +249,10 @@ void Class_DR16::DR16_Data_Process()
     Data.Left_X = (tmp_buffer->Channel_2 - Rocker_Offset) / Rocker_Num;
     Data.Left_Y = (tmp_buffer->Channel_3 - Rocker_Offset) / Rocker_Num;
 
+    if(Data.Right_X > 0.0f && Data.Right_X < Right_X_Dead_Zone)
+        {
+            Data.Right_X = 0;
+        }
     // 判断拨码触发
     Judge_Switch(&Data.Left_Switch, tmp_buffer->Switch_1, Pre_UART_Rx_Data.Switch_1);
     Judge_Switch(&Data.Right_Switch, tmp_buffer->Switch_2, Pre_UART_Rx_Data.Switch_2);
