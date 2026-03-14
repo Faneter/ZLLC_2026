@@ -808,7 +808,7 @@ void Class_Chariot::Control_Booster()
                 }
                 if (DR16.Get_Yaw() > 0.8f && Shoot_Flag == 0) // 五连发
                 {
-                    Booster.Set_Booster_Control_Type(Booster_Control_Type_MULTI);
+                    Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
                     Shoot_Flag = 1;
                 }
             }

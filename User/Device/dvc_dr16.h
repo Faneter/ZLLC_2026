@@ -257,7 +257,7 @@
      // 遥控器50ms串口错误次数
      uint16_t Error_Cnt = 0;
      // 读变量
- 
+    float Right_X_Dead_Zone = 0.005f;
      // 遥控器状态
      Enum_DR16_Status DR16_Status = DR16_Status_DISABLE;
      // 遥控器数据更新状态
@@ -270,7 +270,7 @@
      Struct_DR16_Data Data;
  
      // 写变量
- 
+    
      // 读写变量
  
      // 内部函数
