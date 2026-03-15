@@ -48,6 +48,8 @@ void Class_Chariot::Init(float __DR16_Dead_Zone)
     huart6.Instance->BRR = UART_BRR_SAMPLING16(HAL_RCC_GetPCLK2Freq(), 115200);
 
     Force_Control_Chassis.Init();
+    Force_Control_Chassis.Referee = &Referee;
+
 #elif defined(GIMBAL)
 
     Chassis.Set_Velocity_X_Max(4.0f);
@@ -640,17 +642,17 @@ void Class_Chariot::Control_Gimbal()
                 tmp_gimbal_yaw += 180;
             }
             // V键按下 自瞄模式中切换四点和五点模式
-            if (DR16.Get_Keyboard_Key_V() == DR16_Key_Status_TRIG_FREE_PRESSED)
-            {
-                if (Gimbal.MiniPC->Get_MiniPC_Type() == MiniPC_Type_Windmill)
-                {
-                    Gimbal.MiniPC->Set_MiniPC_Type(MiniPC_Type_Nomal);
-                }
-                else
-                {
-                    Gimbal.MiniPC->Set_MiniPC_Type(MiniPC_Type_Windmill);
-                }
-            }
+            // if (DR16.Get_Keyboard_Key_V() == DR16_Key_Status_TRIG_FREE_PRESSED)
+            // {
+            //     if (Gimbal.MiniPC->Get_MiniPC_Type() == MiniPC_Type_Windmill)
+            //     {
+            //         Gimbal.MiniPC->Set_MiniPC_Type(MiniPC_Type_Nomal);
+            //     }
+            //     else
+            //     {
+            //         Gimbal.MiniPC->Set_MiniPC_Type(MiniPC_Type_Windmill);
+            //     }
+            // }
             // Z键按下 切换反小陀螺开关
             // if (DR16.Get_Keyboard_Key_Z() == DR16_Key_Status_TRIG_FREE_PRESSED)
             // {
@@ -721,17 +723,17 @@ void Class_Chariot::Control_Gimbal()
             //     }
             // }
             // V键按下 自瞄模式中切换四点和五点模式
-            if (VT13.Get_Keyboard_Key_V() == VT13_Key_Status_TRIG_FREE_PRESSED)
-            {
-                if (Gimbal.MiniPC->Get_MiniPC_Type() == MiniPC_Type_Windmill)
-                {
-                    Gimbal.MiniPC->Set_MiniPC_Type(MiniPC_Type_Nomal);
-                }
-                else
-                {
-                    Gimbal.MiniPC->Set_MiniPC_Type(MiniPC_Type_Windmill);
-                }
-            }
+            // if (VT13.Get_Keyboard_Key_V() == VT13_Key_Status_TRIG_FREE_PRESSED)
+            // {
+            //     if (Gimbal.MiniPC->Get_MiniPC_Type() == MiniPC_Type_Windmill)
+            //     {
+            //         Gimbal.MiniPC->Set_MiniPC_Type(MiniPC_Type_Nomal);
+            //     }
+            //     else
+            //     {
+            //         Gimbal.MiniPC->Set_MiniPC_Type(MiniPC_Type_Windmill);
+            //     }
+            // }
             // G键按下切换Pitch锁定模式和free模式
             // if (VT13.Get_Keyboard_Key_G() == VT13_Key_Status_TRIG_FREE_PRESSED)
             // {
@@ -962,13 +964,29 @@ void Class_Chariot::Control_Booster()
                     {
 						if(Referee.Get_Booster_17mm_1_Heat() + 30 < Referee.Get_Booster_17mm_1_Heat_Max())
 						{
-							
-                        if (VT13.Get_Mouse_Left_Key() == VT13_Key_Status_PRESSED && MiniPC.Get_Fire_Status() == 1 && MiniPC.Get_MiniPC_Status() == MiniPC_Data_Status_ENABLE)
-                        {
-                            Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
+
+                            if (VT13.Get_Mouse_Left_Key() == VT13_Key_Status_PRESSED && MiniPC.Get_MiniPC_Status() == MiniPC_Data_Status_ENABLE)
+                            {
+                                //实现并不优雅，可以考虑将下述逻辑添加到Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE)的case{}中处理
+                                //下边的处理是为了在Fire_Status为0时，立刻调整拨盘使之停止，不然会出现累计的多发
+                                static uint8_t Switch2_Flag = 0;
+                                if (MiniPC.Get_Fire_Status() == 1)
+                                {
+                                    Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
+                                    Switch2_Flag = 1;
+                                }
+                                else
+                                {
+                                    Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
+                                    if (Switch2_Flag == 1)
+                                    {
+                                        float tmp_now_dirve = Booster.Motor_Driver.Get_Now_Radian();
+                                        Booster.Set_Target_Drvier_Angle(tmp_now_dirve);
+                                        Switch2_Flag = 0;
+                                    }
+                                }
+                            }
                         }
-						
-					    }
                     }
                     else
                     {

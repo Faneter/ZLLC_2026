@@ -16,11 +16,11 @@ void Class_IMU::Init()
 {
     // 初始化BMI088传感器，计算零漂 并检查初始化是否成功
     IMU_BMI088.init(&hspi1,&BMI088_Raw_Data);
-    HAL_Delay(100);
+    //HAL_Delay(100);
 
     // 初始化IST8310传感器
-    IMU_IST8310.init(&hi2c3);
-    HAL_Delay(100);
+    //IMU_IST8310.init(&hi2c3);
+    //HAL_Delay(100);
 
     // 初始化MahonyAHRS算法，并传入初始四元数
     IMU_MahonyAHRS.init(INS_Quat);

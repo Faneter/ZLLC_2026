@@ -59,6 +59,9 @@ public:
     //超电
     Class_Supercap Supercap;
 
+    // 裁判系统
+    Class_Referee *Referee;
+
     Class_Filter_Fourier PID_Velocity_Filter[2];
     Class_Filter_Fourier PID_Omega_Filter;
 
