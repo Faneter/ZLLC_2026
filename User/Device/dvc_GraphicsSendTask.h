@@ -198,9 +198,11 @@ typedef struct
 	uint16_t booster_fric_omega_left;
 	uint16_t booster_fric_omega_right;
 	uint16_t Booster_bullet_num;
+	uint16_t Booster_17mm_Heat;
+	uint16_t Booster_17mm_Heat_Max;
 	float Supercap_Voltage;
 	float Pitch_Angle;
-	 float Chassis_Gimbal_Diff;
+	float Chassis_Gimbal_Diff;
 
 } JudgeReceive_t;
 

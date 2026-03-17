@@ -1140,8 +1140,6 @@ public:
     inline uint16_t Get_HP_Max();
     inline uint16_t Get_Booster_17mm_1_Heat_CD();
     inline uint16_t Get_Booster_17mm_1_Heat_Max();
-    inline uint16_t Get_Booster_17mm_2_Heat_CD();
-    inline uint16_t Get_Booster_17mm_2_Heat_Max();
     inline uint16_t Get_Booster_42mm_Heat_CD();
     inline uint16_t Get_Booster_42mm_Heat_Max();
     inline uint16_t Get_Chassis_Power_Max();
@@ -1586,40 +1584,6 @@ uint16_t Class_Referee::Get_Booster_17mm_1_Heat_Max()
     return (Robot_Status.Shooter_Barrel_Heat_Limit);
 }
 
-
-/**
- * @brief 获取17mm2枪口冷却速度
- *
- * @return uint16_t 17mm2枪口冷却速度
- */
-uint16_t Class_Referee::Get_Booster_17mm_2_Heat_CD()
-{
-#ifdef Robot_SENTRY_7
-    if (Robot_Status.Booster_17mm_2_Heat_CD == 0)
-    {
-        return (40);
-    }
-#endif
-    return (Robot_Status.Shooter_Barrel_Cooling_Value);
-}
-
-/**
- * @brief 获取17mm2枪口热量上限
- *
- * @return uint16_t 17mm2枪口热量上限
- */
-uint16_t Class_Referee::Get_Booster_17mm_2_Heat_Max()
-{
-#ifdef Robot_SENTRY_7
-    if (Robot_Status.Booster_17mm_2_Heat_Max == 0)
-    {
-        return (240);
-    }
-#endif
-    return (Robot_Status.Shooter_Barrel_Heat_Limit);
-}
-
-
 /**
  * @brief 获取42mm枪口冷却速度
  *
@@ -1742,7 +1706,10 @@ uint16_t Class_Referee::Get_Booster_17mm_1_Heat()
     return (Robot_Power_Heat.Booster_17mm_1_Heat);
 }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 585267167a89e7cd3013bec538a9f79e208ef5f1
 /**
  * @brief 获取42mm热量
  *

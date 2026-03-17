@@ -382,9 +382,9 @@ void Task100us_TIM2_Callback()
     }
 
     Referee_Sand_Cnt++;
-    //速控底盘的imu读取任务
-    //chariot.Chassis.Boardc_BMI.TIM_Calculate_PeriodElapsedCallback();
-    //力控底盘的Imu读取任务
+    // 速控底盘的imu读取任务
+    // chariot.Chassis.Boardc_BMI.TIM_Calculate_PeriodElapsedCallback();
+    // 力控底盘的Imu读取任务
     chariot.Force_Control_Chassis.Boardc_BMI.TIM_Calculate_PeriodElapsedCallback();
 #elif defined(GIMBAL)
     // 单给IMU消息开的定时器 ims
@@ -406,15 +406,15 @@ void Task1ms_TIM5_Callback()
     init_finished++;
     if (init_finished > 2000 && start_flag == 0)
     {
-    //Buzzer.Set_NowTask(BUZZER_DEVICE_OFFLINE_PRIORITY);
-    //buzzer_setTask(&buzzer, BUZZER_CALIBRATED_PRIORITY);
+        // Buzzer.Set_NowTask(BUZZER_DEVICE_OFFLINE_PRIORITY);
+        // buzzer_setTask(&buzzer, BUZZER_CALIBRATED_PRIORITY);
         start_flag = 1;
     }
     /************ 判断设备在线状态判断 50ms (所有device:电机，遥控器，裁判系统等) ***************/
 
     chariot.TIM1msMod50_Alive_PeriodElapsedCallback();
-    
-    //buzzer_taskScheduler(&buzzer);
+
+    // buzzer_taskScheduler(&buzzer);
     /****************************** 交互层回调函数 1ms *****************************************/
     if (start_flag == 1)
     {
@@ -428,7 +428,7 @@ void Task1ms_TIM5_Callback()
         // 统一打包发送
         TIM_CAN_PeriodElapsedCallback();
 
-        //TIM_UART_PeriodElapsedCallback();
+        // TIM_UART_PeriodElapsedCallback();
 
         // 给上位机发数据
         TIM_USB_PeriodElapsedCallback(&MiniPC_USB_Manage_Object);
@@ -564,13 +564,15 @@ extern "C" void Task_Loop()
         JudgeReceiveData.Booster_User_Control_Type = chariot.Booster_User_Control_Type;
         // JudgeReceiveData.Supercap_Energy = chariot.Chassis.Supercap.Get_Stored_Energy();    // 超级电容储能
         JudgeReceiveData.Supercap_Voltage = chariot.Chassis.Supercap.Get_Supercap_Charge_Percentage() / 100.0f; // 超级电容容量
-        JudgeReceiveData.Chassis_Control_Type = chariot.Chassis.Get_Chassis_Control_Type();      // 底盘控制模式
+        JudgeReceiveData.Chassis_Control_Type = chariot.Chassis.Get_Chassis_Control_Type();                     // 底盘控制模式
         JudgeReceiveData.Supercap_State = chariot.Sprint_Status;
         JudgeReceiveData.booster_fric_omega_left = chariot.Booster_fric_omega_left; // 左摩擦轮速度; // 左摩擦轮速度
         JudgeReceiveData.booster_fric_omega_right = chariot.Booster_fric_omega_right;
-				JudgeReceiveData.Booster_bullet_num=chariot.Booster_bullet_num-chariot.Booster_bullet_num_before;
+        JudgeReceiveData.Booster_bullet_num = chariot.Booster_bullet_num - chariot.Booster_bullet_num_before;
+        JudgeReceiveData.Booster_17mm_Heat = chariot.Referee.Get_Booster_17mm_1_Heat();
+        JudgeReceiveData.Booster_17mm_Heat_Max = chariot.Referee.Get_Booster_17mm_1_Heat_Max();
         JudgeReceiveData.Minipc_Mode = chariot.MiniPC_Type;
-				JudgeReceiveData.Antispin_Type=chariot.Antispin_Type;
+        JudgeReceiveData.Antispin_Type = chariot.Antispin_Type;
         if (chariot.Referee_UI_Refresh_Status == Referee_UI_Refresh_Status_ENABLE)
             Init_Cnt = 10;
     }
