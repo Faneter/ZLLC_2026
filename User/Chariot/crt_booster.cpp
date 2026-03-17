@@ -14,7 +14,8 @@
 #include "crt_booster.h"
 
 /* Private macros ------------------------------------------------------------*/
-
+//#define Heat_Detect_ENABLE
+#define Heat_Detect_DISABLE
 /* Private types -------------------------------------------------------------*/
 
 /* Private variables ---------------------------------------------------------*/
@@ -84,10 +85,11 @@ void Class_FSM_Heat_Detect::Reload_TIM_Status_PeriodElapsedCallback()
     break;
     }
 
+    
     // 热量冷却到0
     if (Heat > 0)
     {
-        // Heat -= Booster->Referee->Get_Booster_17mm_1_Heat_CD() / 1000.0f;
+        Heat -= Booster->Referee->Get_Booster_17mm_1_Heat_CD() / 1000.0f;
     }
     else
     {
@@ -254,16 +256,19 @@ void Class_Booster::Output()
         Motor_Friction_Left.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
         Motor_Friction_Right.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
 
-        // if (Referee->Get_Booster_17mm_1_Heat() + 30 < Referee->Get_Booster_17mm_1_Heat_Max())
-        // {
-
-        //     Drvier_Angle += 2.0f * PI / 9.0f;
-        //     Motor_Driver.Set_Target_Radian(Drvier_Angle);
-        // }
+        #ifdef Heat_Detect_ENABLE
+        if (FSM_Heat_Detect.Heat + 30 < Referee->Get_Booster_17mm_1_Heat_Max())
+        {
 
             Drvier_Angle += 2.0f * PI / 9.0f;
             Motor_Driver.Set_Target_Radian(Drvier_Angle);
-
+        }
+        #endif
+        
+        #ifdef Heat_Detect_DISABLE
+        Drvier_Angle += 2.0f * PI / 9.0f;
+        Motor_Driver.Set_Target_Radian(Drvier_Angle);
+        #endif
         // 点一发立刻停火
         Booster_Control_Type = Booster_Control_Type_CEASEFIRE;
     }
@@ -288,7 +293,32 @@ void Class_Booster::Output()
         Motor_Driver.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
         Motor_Friction_Left.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
         Motor_Friction_Right.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
+        
+        #ifdef Heat_Detect_ENABLE
+        // float Tmp_Heat = 0.0f;
+        // if(Referee->Get_Referee_Status() == Referee_Status_ENABLE)
+        // {
+        //     Tmp_Heat = Referee->Get_Booster_17mm_1_Heat_CD()
+        //     Default_Driver_Omega = Referee->Get_Booster_17mm_1_Heat_CD() / 10.0f / 8.0f * 2.0f * PI;
+        // }
+        //根据冷却计算拨弹盘默认速度, 此速度下与冷却均衡
+        Default_Driver_Omega = Referee->Get_Booster_17mm_1_Heat_CD() / 10.0f / 9.0f * 2.0f * PI;
+        //热量控制
+        if (Driver_Omega <= Default_Driver_Omega)
+        {
+            Motor_Driver.Set_Target_Omega_Radian(Driver_Omega);
+        }
+        else
+        {
+            float tmp_omega;
+            tmp_omega = (Default_Driver_Omega - Driver_Omega) / Referee->Get_Booster_17mm_1_Heat_Max() * (FSM_Heat_Detect.Heat + 30.0f) + Driver_Omega;
+            Motor_Driver.Set_Target_Omega_Radian(tmp_omega);
+        }
 
+
+
+        #endif
+        #ifdef Heat_Detect_DISABLE
         if (Referee->Get_Booster_17mm_1_Heat() + 30 < Referee->Get_Booster_17mm_1_Heat_Max())
         {
             Motor_Driver.Set_Target_Omega_Radian(Default_Driver_Omega);
@@ -297,6 +327,7 @@ void Class_Booster::Output()
         {
             Booster_Control_Type = Booster_Control_Type_CEASEFIRE;
         }
+        #endif
         }
     break;
     }
@@ -328,7 +359,7 @@ void Class_Booster::TIM_Calculate_PeriodElapsedCallback()
     // 卡弹处理
     FSM_Antijamming.Reload_TIM_Status_PeriodElapsedCallback();
 
-    Output();
+    //Output();
 
     Motor_Driver.TIM_PID_PeriodElapsedCallback();
     Motor_Friction_Left.TIM_PID_PeriodElapsedCallback();
