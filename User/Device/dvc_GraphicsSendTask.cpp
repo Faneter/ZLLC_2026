@@ -569,6 +569,7 @@ void Char_Init(void)
 	static uint8_t MiniPCModeLabelName[] = "mpl";	// MiniPC模式标签名称
 	static uint8_t BulletNumName[] = "bnu";			// 弹丸已发射数量
 	static uint8_t AntispinType[] = "ant";
+	static uint8_t BoosterHeatLabelName[] = "hla"; // 枪口热量
 	/*              FIREMODE字符*/
 	uint8_t fire_char[] = "CHASSIS :";
 	Char_Draw(0, Op_Add, 0.80 * SCREEN_LENGTH, 0.40 * SCREEN_WIDTH, 20, sizeof(fire_char), 2, Yellow, FireName, fire_char);
@@ -596,6 +597,10 @@ void Char_Init(void)
 	/*              GIMBAL状态标签            */
 	uint8_t gimbal_status_label[] = "GIMBAL :";
 	Char_Draw(0, Op_Add, 0.80 * SCREEN_LENGTH, 0.45 * SCREEN_WIDTH, 20, sizeof(gimbal_status_label), 2, Yellow, GimbalStatusLabelName, gimbal_status_label);
+
+	// HEAT: 字符
+	// uint8_t booster_heat_label[] = "HEAT :";
+	// Char_Draw(0, Op_Add, 0.25 * SCREEN_LENGTH, 0.26 * SCREEN_WIDTH, 30, sizeof(booster_heat_label), 2, Yellow, BoosterHeatLabelName, booster_heat_label);
 }
 
 void MiniPC_Aim_Change(uint8_t Init_Cnt)
@@ -866,6 +871,57 @@ void Antispin_Draw(uint8_t Init_Cnt)
 		break;
 	}
 }
+
+/**
+ * @brief 绘制枪口热量进度条UI
+ *
+ * @param heat 当前热量值
+ * @param heat_max 当前热量上限
+ * @param Init_Flag 初始化标志 >1:初始化绘制，0:更新
+ */
+void Booster_Heat_Draw(uint16_t heat, uint16_t heat_max, uint8_t Init_Flag)
+{
+	static float Length;
+	static uint8_t HeatOuterName[] = "Hot"; // 外框
+	static uint8_t HeatInnerName[] = "Hin"; // 内填充线
+
+	graphic_data_struct_t *P_graphic_data;
+
+	if (Init_Flag)
+	{
+		// 外框矩形
+		P_graphic_data = Rectangle_Draw(0, Op_Add,
+										0.31f * SCREEN_LENGTH - 15, 0.75f * SCREEN_WIDTH + 2,
+										0.31f * SCREEN_LENGTH + 15, 0.25f * SCREEN_WIDTH - 2,
+										5, Cyan, HeatOuterName);
+		memcpy(data_pack, (uint8_t *)P_graphic_data, DRAWING_PACK);
+
+		// 内填充线（初始化时长度为0，即起点=终点）
+		P_graphic_data = Line_Draw(0, Op_Add,
+								   0.31f * SCREEN_LENGTH, 0.25f * SCREEN_WIDTH,
+								   0.31f * SCREEN_LENGTH, 0.25f * SCREEN_WIDTH,
+								   27, Green, HeatInnerName);
+		memcpy(&data_pack[DRAWING_PACK], (uint8_t *)P_graphic_data, DRAWING_PACK);
+
+		Send_UIPack(Drawing_Graphic2_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK * 2);
+	}
+	else
+	{
+		// 计算填充长度（归一化比例 * 总长0.3*屏幕长度）
+		float ratio = (heat_max > 0) ? ((float)heat / heat_max) : 0.0f;
+		if (ratio > 1.0f)
+			ratio = 1.0f;
+		Length = ratio * (0.5f * SCREEN_WIDTH);
+
+		P_graphic_data = Line_Draw(0, Op_Change,
+								   0.31f * SCREEN_LENGTH, 0.25f * SCREEN_WIDTH,
+								   0.31f * SCREEN_LENGTH, 0.25f * SCREEN_WIDTH + Length,
+								   27, (ratio <= 0.5f) ? Green : Orange, HeatInnerName);
+		memcpy(data_pack, (uint8_t *)P_graphic_data, DRAWING_PACK);
+		Send_UIPack(Drawing_Graphic1_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK);
+	}
+}
+
 /**********************************************************************************************************
  *函 数 名: GraphicSendtask
  *功能说明: ͼ�η�������
@@ -913,7 +969,8 @@ void GraphicSendtask(void)
 		BoosterMode_Draw(Init_Cnt);
 		GimbalStatus_Draw(Init_Cnt);
 		RadarDoubleDamage_Draw(Init_Cnt);
-		MiniPCMode_Draw(Init_Cnt); // 添加MiniPC模式初始化
+		MiniPCMode_Draw(Init_Cnt);																				 // 添加MiniPC模式初始化
+		Booster_Heat_Draw(JudgeReceiveData.Booster_17mm_Heat, JudgeReceiveData.Booster_17mm_Heat_Max, Init_Cnt); // 枪口热量
 
 		Init_Cnt--;
 
@@ -1009,6 +1066,16 @@ void GraphicSendtask(void)
 			last_update_time = current_time;
 			break;
 		}
+
+		if (Last_JudgeReceiveData.Booster_17mm_Heat != JudgeReceiveData.Booster_17mm_Heat)
+		{
+			ui_state = UI_STATE_STATUS_UPDATE;
+			last_status_type = 9;
+			status_update_retry = 0;
+			last_update_time = current_time;
+			break;
+		}
+
 		// 如果没有状态变化，且距离上次数值更新已经过去足够时间，则进入数值更新状态
 		if (current_time - last_update_time > 10) // 10ms更新一次数值
 		{
@@ -1052,6 +1119,10 @@ void GraphicSendtask(void)
 		case 8:
 			BulletNum_Draw(JudgeReceiveData.Booster_bullet_num, 0);
 			Last_JudgeReceiveData.Booster_bullet_num = JudgeReceiveData.Booster_bullet_num;
+			break;
+		case 9:
+			Booster_Heat_Draw(JudgeReceiveData.Booster_17mm_Heat, JudgeReceiveData.Booster_17mm_Heat_Max, 0);
+			Last_JudgeReceiveData.Booster_17mm_Heat = JudgeReceiveData.Booster_17mm_Heat;
 			break;
 		}
 
