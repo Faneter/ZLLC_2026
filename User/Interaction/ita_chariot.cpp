@@ -46,6 +46,7 @@ void Class_Chariot::Init(float __DR16_Dead_Zone)
     Motor_Yaw.Init(&hcan2, DJI_Motor_ID_0x206);
 
     huart6.Instance->BRR = UART_BRR_SAMPLING16(HAL_RCC_GetPCLK2Freq(), 115200);
+    //hdma_usart6_rx.Init.Mode = DMA_CIRCULAR;
 
     Force_Control_Chassis.Init();
     Force_Control_Chassis.Referee = &Referee;
@@ -224,6 +225,7 @@ void Class_Chariot::CAN_Gimbal_Rx_Chassis_Callback()
     Referee.Set_Booster_17mm_1_Heat_Max(Shooter_Barrel_Heat_Limit);
     Referee.Set_Game_Stage(game_stage);
     Referee.Set_Booster_Speed(Shooter_Speed);
+    Referee.Set_Booster_17mm_1_Heat_CD(14.0f);
 }
 void Class_Chariot::CAN_Gimbal_Rx_Chassis_Callback_1()
 {

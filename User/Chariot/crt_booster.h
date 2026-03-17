@@ -146,7 +146,7 @@ protected:
     // 读变量
 
     // 拨弹盘默认速度
-    float Default_Driver_Omega = 2.0f * PI / 9.0f * 20;
+    float Default_Driver_Omega = 2.0f * PI / 9.0f * 20;//弹频为每秒20发
 
     // 写变量
 
@@ -157,7 +157,7 @@ protected:
     float Friction_Omega = 750.0f;
     float Target_Bullet_Speed = 23.5f;
     // 拨弹盘实际的目标速度
-    float Driver_Omega = 2.0f * PI;
+    float Driver_Omega = 2.0f * PI;//弹频为每秒9发
     // 拨弹轮目标绝对角度 加圈数
     float Drvier_Angle = 0.0f;
     // 读写变量
