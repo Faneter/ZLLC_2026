@@ -1706,10 +1706,6 @@ uint16_t Class_Referee::Get_Booster_17mm_1_Heat()
     return (Robot_Power_Heat.Booster_17mm_1_Heat);
 }
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 585267167a89e7cd3013bec538a9f79e208ef5f1
 /**
  * @brief 获取42mm热量
  *
