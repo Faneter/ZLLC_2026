@@ -14,8 +14,8 @@
 #include "crt_booster.h"
 
 /* Private macros ------------------------------------------------------------*/
-//#define Heat_Detect_ENABLE
-#define Heat_Detect_DISABLE
+#define Heat_Detect_ENABLE
+//#define Heat_Detect_DISABLE
 /* Private types -------------------------------------------------------------*/
 
 /* Private variables ---------------------------------------------------------*/
@@ -29,9 +29,12 @@
  * 这是一个模板, 使用时请根据不同处理情况在不同文件内重新定义
  *
  */
+Enum_Friction_Control_Type Last_Friction_Control_Type = Friction_Control_Type_DISABLE;
 void Class_FSM_Heat_Detect::Reload_TIM_Status_PeriodElapsedCallback()
 {
     Status[Now_Status_Serial].Time++;
+
+    //static Enum_Friction_Control_Type Last_Friction_Control_Type = Friction_Control_Type_DISABLE;
 
     // 自己接着编写状态转移函数
     switch (Now_Status_Serial)
@@ -57,7 +60,7 @@ void Class_FSM_Heat_Detect::Reload_TIM_Status_PeriodElapsedCallback()
     {
         // 发射嫌疑状态
 
-        if (Status[Now_Status_Serial].Time >= 15)
+        if (Status[Now_Status_Serial].Time >= 30)
         {
             // 长时间大扭矩->确认是发射了
             Set_Status(2);
@@ -66,10 +69,26 @@ void Class_FSM_Heat_Detect::Reload_TIM_Status_PeriodElapsedCallback()
     break;
     case (2):
     {
-        // 发射完成状态->加上热量进入下一轮检测
-        Booster->actual_bullet_num++;
-        Heat += 10.0f;
-        Set_Status(0);
+        if (Last_Friction_Control_Type == Friction_Control_Type_DISABLE && Booster->Friction_Control_Type == Friction_Control_Type_ENABLE)
+        {
+            //Heat += 100.0f;
+            Last_Friction_Control_Type = Booster->Get_Friction_Control_Type();
+            Set_Status(0);
+        }
+        else if(Last_Friction_Control_Type == Friction_Control_Type_ENABLE && Booster->Friction_Control_Type == Friction_Control_Type_DISABLE)
+        {
+            //Heat += 100.0f;
+            Last_Friction_Control_Type = Booster->Get_Friction_Control_Type();
+            Set_Status(0);
+        }
+        else
+        {
+            // 发射完成状态->加上热量进入下一轮检测
+            Booster->actual_bullet_num++;
+            // shoot_num ++;
+            Heat += 10.0f;
+            Set_Status(0);
+        }
     }
     break;
     case (3):
@@ -257,7 +276,7 @@ void Class_Booster::Output()
         Motor_Friction_Right.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
 
         #ifdef Heat_Detect_ENABLE
-        if (FSM_Heat_Detect.Heat + 30 < Referee->Get_Booster_17mm_1_Heat_Max())
+        if (FSM_Heat_Detect.Heat + 20 < Referee->Get_Booster_17mm_1_Heat_Max())
         {
 
             Drvier_Angle += 2.0f * PI / 9.0f;
@@ -311,7 +330,7 @@ void Class_Booster::Output()
         else
         {
             float tmp_omega;
-            tmp_omega = (Default_Driver_Omega - Driver_Omega) / Referee->Get_Booster_17mm_1_Heat_Max() * (FSM_Heat_Detect.Heat + 30.0f) + Driver_Omega;
+            tmp_omega = (Default_Driver_Omega - Driver_Omega) / Referee->Get_Booster_17mm_1_Heat_Max() * (FSM_Heat_Detect.Heat + 20.0f) + Driver_Omega;
             Motor_Driver.Set_Target_Omega_Radian(tmp_omega);
         }
 
@@ -326,7 +345,7 @@ void Class_Booster::Output()
         else
         {
             Booster_Control_Type = Booster_Control_Type_CEASEFIRE;
-        }
+        }d
         #endif
         }
     break;
