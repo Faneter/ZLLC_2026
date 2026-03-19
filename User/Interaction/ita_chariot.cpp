@@ -53,8 +53,8 @@ void Class_Chariot::Init(float __DR16_Dead_Zone)
 
 #elif defined(GIMBAL)
 
-    Chassis.Set_Velocity_X_Max(4.0f);
-    Chassis.Set_Velocity_Y_Max(4.0f);
+    Chassis.Set_Velocity_X_Max(8.0f);
+    Chassis.Set_Velocity_Y_Max(8.0f);
 
     // 遥控器离线控制 状态机
     FSM_Alive_Control.Chariot = this;
@@ -189,7 +189,7 @@ void Class_Chariot::CAN_Chassis_Rx_Gimbal_Callback_1()
     uint16_t before_game_bullet_num = 0;
     MiniPC_Type = Enum_MiniPC_Type(CAN_Manage_Object->Rx_Buffer.Data[0]);
     Antispin_Type = Enum_Antispin_Type(CAN_Manage_Object->Rx_Buffer.Data[1]);
-    memcpy(&Booster_fric_omega_left, &CAN_Manage_Object->Rx_Buffer.Data[2], sizeof(uint16_t));
+    memcpy(&Booster_Heat, &CAN_Manage_Object->Rx_Buffer.Data[2], sizeof(uint16_t));
     memcpy(&Booster_fric_omega_right, &CAN_Manage_Object->Rx_Buffer.Data[4], sizeof(uint16_t));
     memcpy(&Booster_bullet_num, &CAN_Manage_Object->Rx_Buffer.Data[6], sizeof(uint16_t));
     if (Referee.Get_Game_Stage() == Referee_Game_Status_Stage_NOT_STARTED)
@@ -213,19 +213,20 @@ void Class_Chariot::CAN_Gimbal_Rx_Chassis_Callback()
     uint16_t Shooter_Barrel_Heat;
     uint16_t Shooter_Barrel_Heat_Limit;
     uint16_t tmp_shooter_speed;
+    uint16_t Shooter_Barrel_Cooling_Value;
     float Shooter_Speed;
     robo_id = (Enum_Referee_Data_Robots_ID)CAN_Manage_Object->Rx_Buffer.Data[0];
     game_stage = (Enum_Referee_Game_Status_Stage)CAN_Manage_Object->Rx_Buffer.Data[1];
     memcpy(&Shooter_Barrel_Heat_Limit, CAN_Manage_Object->Rx_Buffer.Data + 2, sizeof(uint16_t));
-    memcpy(&Shooter_Barrel_Heat, CAN_Manage_Object->Rx_Buffer.Data + 4, sizeof(uint16_t));
+    memcpy(&Shooter_Barrel_Cooling_Value, CAN_Manage_Object->Rx_Buffer.Data + 4, sizeof(uint16_t));
     memcpy(&tmp_shooter_speed, CAN_Manage_Object->Rx_Buffer.Data + 6, sizeof(uint16_t));
     Shooter_Speed = tmp_shooter_speed / 10.0f;
     Referee.Set_Robot_ID(robo_id);
-    Referee.Set_Booster_17mm_1_Heat(Shooter_Barrel_Heat);
+    //Referee.Set_Booster_17mm_1_Heat(Shooter_Barrel_Heat);
     Referee.Set_Booster_17mm_1_Heat_Max(Shooter_Barrel_Heat_Limit);
     Referee.Set_Game_Stage(game_stage);
     Referee.Set_Booster_Speed(Shooter_Speed);
-    Referee.Set_Booster_17mm_1_Heat_CD(14.0f);
+    Referee.Set_Booster_17mm_1_Heat_CD(Shooter_Barrel_Cooling_Value);
 }
 void Class_Chariot::CAN_Gimbal_Rx_Chassis_Callback_1()
 {
@@ -284,12 +285,14 @@ void Class_Chariot::CAN_Gimbal_Tx_Chassis_Callback_1()
     uint16_t tmp_fric_omega_left = 0;
     uint16_t tmp_fric_omega_right = 0;
     uint16_t tmp_actual_bullet_num = 0;
+    uint16_t Heat = 0;
     tmp_fric_omega_left = (uint16_t)abs(Booster.Motor_Friction_Left.Get_Now_Omega_Radian());
     tmp_fric_omega_right = (uint16_t)abs(Booster.Motor_Friction_Right.Get_Now_Omega_Radian());
     tmp_actual_bullet_num = Booster.actual_bullet_num;
     CAN2_Gimbal_Tx_Chassis_Data_1[0] = MiniPC.Get_MiniPC_Type();
+    Heat = Booster.FSM_Heat_Detect.Heat;
     //CAN2_Gimbal_Tx_Chassis_Data_1[1] = MiniPC.Get_Antispin_Type();
-    memcpy(CAN2_Gimbal_Tx_Chassis_Data_1 + 2, &tmp_fric_omega_left, sizeof(uint16_t));
+    memcpy(CAN2_Gimbal_Tx_Chassis_Data_1 + 2, &Heat, sizeof(uint16_t));
     memcpy(CAN2_Gimbal_Tx_Chassis_Data_1 + 4, &tmp_fric_omega_right, sizeof(uint16_t));
     memcpy(CAN2_Gimbal_Tx_Chassis_Data_1 + 6, &tmp_actual_bullet_num, sizeof(uint16_t));
 }
@@ -1045,14 +1048,16 @@ void Class_Chariot::CAN_Chassis_Tx_Gimbal_Callback()
     uint16_t Shooter_Barrel_Heat;
     uint16_t Shooter_Barrel_Heat_Limit;
     uint16_t Shooter_Speed;
+    uint16_t Shooter_Cool;
     Shooter_Barrel_Heat_Limit = Referee.Get_Booster_17mm_1_Heat_Max();
     Shooter_Barrel_Heat = Referee.Get_Booster_17mm_1_Heat();
     Shooter_Speed = uint16_t(Referee.Get_Shoot_Speed() * 10);
+    Shooter_Cool = Referee.Get_Booster_17mm_1_Heat_CD();
     // 发送数据给云台
     CAN2_Chassis_Tx_Gimbal_Data[0] = Referee.Get_ID();
     CAN2_Chassis_Tx_Gimbal_Data[1] = Referee.Get_Game_Stage();
     memcpy(CAN2_Chassis_Tx_Gimbal_Data + 2, &Shooter_Barrel_Heat_Limit, sizeof(uint16_t));
-    memcpy(CAN2_Chassis_Tx_Gimbal_Data + 4, &Shooter_Barrel_Heat, sizeof(uint16_t));
+    memcpy(CAN2_Chassis_Tx_Gimbal_Data + 4, &Shooter_Cool, sizeof(uint16_t));
     memcpy(CAN2_Chassis_Tx_Gimbal_Data + 6, &Shooter_Speed, sizeof(uint16_t));
 }
 void Class_Chariot::CAN_Chassis_Tx_Gimbal_Callback_1()
@@ -1085,7 +1090,7 @@ void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
     {
         Chassis.Set_Target_Omega(Chassis.Get_Spin_Omega());
         //补充力控底盘
-        Force_Control_Chassis.Set_Target_Omega(10.0f);
+        Force_Control_Chassis.Set_Target_Omega(6 * PI * 2.0f);
     }
     else if (Force_Control_Chassis.Get_Chassis_Control_Type() == Chassis_Control_Type_FLLOW__)
     {

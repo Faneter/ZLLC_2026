@@ -205,6 +205,7 @@ public:
     uint16_t Booster_fric_omega_right = 0;
 		uint16_t Booster_bullet_num_before=0;
 		uint16_t Booster_bullet_num=0;
+        uint16_t Booster_Heat;
 #elif defined(GIMBAL)
 
     inline void DR16_Offline_Cnt_Plus();

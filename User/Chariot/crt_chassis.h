@@ -92,7 +92,7 @@ public:
     // 下方转动电机
     Class_DJI_Motor_C620 Motor_Wheel[4];
 
-    void Init(float __Velocity_X_Max = 7.0f, float __Velocity_Y_Max = 7.0f, float __Omega_Max = 24.0f, float __Steer_Power_Ratio = 0.5);
+    void Init(float __Velocity_X_Max = 8.f, float __Velocity_Y_Max = 8.0f, float __Omega_Max = 24.0f, float __Steer_Power_Ratio = 0.5);
 
     inline Enum_Chassis_Control_Type Get_Chassis_Control_Type();
     inline float Get_Velocity_X_Max();
