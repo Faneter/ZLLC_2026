@@ -936,17 +936,6 @@ void Class_Chariot::Control_Booster()
                 }
             }
 
-            if (VT13.Get_Keyboard_Key_V() == VT13_Key_Status_TRIG_FREE_PRESSED)
-            {
-                if (User_Status == User_Close)
-                {
-                    User_Status = User_Open;
-                }
-                else if (User_Status == User_Open)
-                {
-                    User_Status = User_Close;
-                }
-            }
             if (VT13.Get_Keyboard_Key_Ctrl() == VT13_Key_Status_TRIG_FREE_PRESSED)
             {
                 if (Fric_Status == Fric_Status_CLOSE)
@@ -965,31 +954,24 @@ void Class_Chariot::Control_Booster()
             {
                 if (VT13.Get_Mouse_Right_Key() == VT13_Key_Status_PRESSED)
                 {
-                    if (User_Status == User_Close)
+                    if (VT13.Get_Mouse_Left_Key() == VT13_Key_Status_PRESSED && MiniPC.Get_MiniPC_Status() == MiniPC_Data_Status_ENABLE)
                     {
-						if(Referee.Get_Booster_17mm_1_Heat() + 30 < Referee.Get_Booster_17mm_1_Heat_Max())
-						{
-
-                            if (VT13.Get_Mouse_Left_Key() == VT13_Key_Status_PRESSED && MiniPC.Get_MiniPC_Status() == MiniPC_Data_Status_ENABLE)
+                        // 实现并不优雅，可以考虑将下述逻辑添加到Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE)的case{}中处理
+                        // 下边的处理是为了在Fire_Status为0时，立刻调整拨盘使之停止，不然会出现累计的多发
+                        static uint8_t Switch2_Flag = 0;
+                        if (MiniPC.Get_Fire_Status() == 1)
+                        {
+                            Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
+                            Switch2_Flag = 1;
+                        }
+                        else
+                        {
+                            Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
+                            if (Switch2_Flag == 1)
                             {
-                                //实现并不优雅，可以考虑将下述逻辑添加到Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE)的case{}中处理
-                                //下边的处理是为了在Fire_Status为0时，立刻调整拨盘使之停止，不然会出现累计的多发
-                                static uint8_t Switch2_Flag = 0;
-                                if (MiniPC.Get_Fire_Status() == 1)
-                                {
-                                    Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
-                                    Switch2_Flag = 1;
-                                }
-                                else
-                                {
-                                    Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
-                                    if (Switch2_Flag == 1)
-                                    {
-                                        float tmp_now_dirve = Booster.Motor_Driver.Get_Now_Radian();
-                                        Booster.Set_Target_Drvier_Angle(tmp_now_dirve);
-                                        Switch2_Flag = 0;
-                                    }
-                                }
+                                float tmp_now_dirve = Booster.Motor_Driver.Get_Now_Radian();
+                                Booster.Set_Target_Drvier_Angle(tmp_now_dirve);
+                                Switch2_Flag = 0;
                             }
                         }
                     }
