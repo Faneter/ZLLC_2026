@@ -240,6 +240,7 @@ void Class_Chariot::CAN_Gimbal_Rx_Chassis_Callback_1()
  * @brief can回调函数给地盘发送数据
  *
  */
+#define DISABLE_ZD_SHOOT
 #ifdef GIMBAL
 // 控制类型字节
 uint8_t control_type;
@@ -511,6 +512,7 @@ void Class_Chariot::Transform_Mouse_Axis()
  * @brief 云台控制逻辑
  *
  */
+
 #ifdef GIMBAL
 float minipc_yaw_offset = -5.0f;
 
@@ -764,6 +766,9 @@ void Class_Chariot::Control_Gimbal()
  * @brief 发射机构控制逻辑
  *
  */
+float Dt6;
+uint32_t Last_time6 = 0;
+#define DISABLE_OLD_CODE
 #ifdef GIMBAL
 void Class_Chariot::Control_Booster()
 {
@@ -780,12 +785,19 @@ void Class_Chariot::Control_Booster()
             Booster.Set_Friction_Control_Type(Friction_Control_Type_ENABLE);
             Fric_Status = Fric_Status_OPEN;
 
+            #ifdef DISABLE_OLD_CODE
             if (DR16.Get_Left_Switch() == DR16_Switch_Status_DOWN)
             { // 自瞄模式火控 上位机控制打弹
+
+                static uint32_t tim_delay = 0,last_tim_delay = 0;
                 static uint8_t Switch_Flag = 0;
-                if (MiniPC.Get_MiniPC_Status() == MiniPC_Data_Status_ENABLE)
+                tim_delay = HAL_GetTick();
+
+                if(tim_delay - last_tim_delay >= 100)
                 {
-                    if (MiniPC.Get_Fire_Status() == 1)
+                    last_tim_delay = tim_delay;
+
+                    if (MiniPC.Get_Fire_Status() == 1 && MiniPC.Get_MiniPC_Status() == MiniPC_Status_ENABLE)
                     {
                         Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
                         Switch_Flag = 1;
@@ -801,21 +813,24 @@ void Class_Chariot::Control_Booster()
                         }
                     }
                 }
+            #endif
+
             }
             else
             {
                 if (DR16.Get_Yaw() > -0.2f && DR16.Get_Yaw() < 0.2f)
                 {
                     Shoot_Flag = 0;
+                    Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
                 }
-                if (DR16.Get_Yaw() < -0.8f && Shoot_Flag == 0) // 单发
+                if (DR16.Get_Yaw() > 0.8f && Shoot_Flag == 0) // 单发
                 {
                     Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
                     Shoot_Flag = 1;
                 }
-                if (DR16.Get_Yaw() > 0.8f && Shoot_Flag == 0) // 五连发
+                if (DR16.Get_Yaw() < -0.8f) // 连发
                 {
-                    Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
+                    Booster.Set_Booster_Control_Type(Booster_Control_Type_REPEATED);
                     Shoot_Flag = 1;
                 }
             }
@@ -952,26 +967,54 @@ void Class_Chariot::Control_Booster()
 
             if (Booster.Get_Friction_Control_Type() == Friction_Control_Type_ENABLE)
             {
-                if (VT13.Get_Mouse_Right_Key() == VT13_Key_Status_PRESSED)
-                {
-                    if (VT13.Get_Mouse_Left_Key() == VT13_Key_Status_PRESSED && MiniPC.Get_MiniPC_Status() == MiniPC_Data_Status_ENABLE)
+                Dt6 = 1.0f / DWT_GetDeltaT(&Last_time6);
+                #ifdef DISABLE_ZD_SHOOT //失能自动打弹
+                // if (VT13.Get_Mouse_Right_Key() == VT13_Key_Status_PRESSED)
+                // {
+                    if (VT13.Get_Mouse_Left_Key() == VT13_Key_Status_PRESSED && VT13.Get_Mouse_Right_Key() == VT13_Key_Status_PRESSED)
                     {
-                        // 实现并不优雅，可以考虑将下述逻辑添加到Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE)的case{}中处理
-                        // 下边的处理是为了在Fire_Status为0时，立刻调整拨盘使之停止，不然会出现累计的多发
-                        static uint8_t Switch2_Flag = 0;
-                        if (MiniPC.Get_Fire_Status() == 1)
+                        static uint32_t tim_delay1 = 0, last_tim_delay1 = 0;
+                        static uint8_t Switch_Flag1 = 0;
+                        tim_delay1 = HAL_GetTick();
+
+                        if (tim_delay1 - last_tim_delay1 >= 100)
                         {
-                            Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
-                            Switch2_Flag = 1;
+                            
+                            last_tim_delay1 = tim_delay1;
+
+                            if (MiniPC.Get_Fire_Status() == 1 && MiniPC.Get_MiniPC_Status() == MiniPC_Status_ENABLE)
+                            {
+                                Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
+                                Switch_Flag1 = 1;
+                            }
+                            else
+                            {
+                                Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
+                                if (Switch_Flag1 == 1)
+                                {
+                                    float tmp_now_dirve = Booster.Motor_Driver.Get_Now_Radian();
+                                    Booster.Set_Target_Drvier_Angle(tmp_now_dirve);
+                                    Switch_Flag1 = 0;
+                                }
+                            }
                         }
                         else
                         {
-                            Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
-                            if (Switch2_Flag == 1)
+                            if (Booster.Booster_User_Control_Type == Booster_User_Control_Type_SINGLE)
                             {
-                                float tmp_now_dirve = Booster.Motor_Driver.Get_Now_Radian();
-                                Booster.Set_Target_Drvier_Angle(tmp_now_dirve);
-                                Switch2_Flag = 0;
+                                if (VT13.Get_Mouse_Left_Key() == VT13_Key_Status_TRIG_FREE_PRESSED)
+                                {
+                                    Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
+                                }
+                            }
+                            if (Booster.Booster_User_Control_Type == Booster_User_Control_Type_MULTI)
+                            {
+                                if (VT13.Get_Mouse_Left_Key() == VT13_Key_Status_PRESSED)
+                                {
+                                    Booster.Set_Booster_Control_Type(Booster_Control_Type_REPEATED);
+                                }
+                                else
+                                    Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
                             }
                         }
                     }
@@ -994,10 +1037,8 @@ void Class_Chariot::Control_Booster()
                                 Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
                         }
                     }
-                }
-                else
-                {
-                    if (Booster.Booster_User_Control_Type == Booster_User_Control_Type_SINGLE)
+                #endif
+                 if (Booster.Booster_User_Control_Type == Booster_User_Control_Type_SINGLE)
                     {
                         if (VT13.Get_Mouse_Left_Key() == VT13_Key_Status_TRIG_FREE_PRESSED)
                         {
@@ -1013,7 +1054,6 @@ void Class_Chariot::Control_Booster()
                         else
                             Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
                     }
-                }
             }
             else
             {
@@ -1072,7 +1112,7 @@ void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
     {
         Chassis.Set_Target_Omega(Chassis.Get_Spin_Omega());
         //补充力控底盘
-        Force_Control_Chassis.Set_Target_Omega(6 * PI * 2.0f);
+        Force_Control_Chassis.Set_Target_Omega(6 * PI);
     }
     else if (Force_Control_Chassis.Get_Chassis_Control_Type() == Chassis_Control_Type_FLLOW__)
     {

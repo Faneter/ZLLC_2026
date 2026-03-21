@@ -217,6 +217,7 @@ void Class_Booster::Init()
  * @brief 输出到电机
  *
  */
+uint8_t Swtich_To_Angle_Control_Flag = 0;
 void Class_Booster::Output()
 {
 
@@ -251,21 +252,21 @@ void Class_Booster::Output()
         Motor_Driver.Set_Out(0.0f);
         Motor_Friction_Left.Set_Target_Omega_Radian(0.0f);
         Motor_Friction_Right.Set_Target_Omega_Radian(0.0f);
+
     }
     break;
     case (Booster_Control_Type_CEASEFIRE):
     {
         // 停火
+
         if (Motor_Driver.Get_Control_Method() == DJI_Motor_Control_Method_ANGLE)
         {
             // Motor_Driver.Set_Target_Angle(Motor_Driver.Get_Now_Angle());
-            
         }
         else if (Motor_Driver.Get_Control_Method() == DJI_Motor_Control_Method_OMEGA)
         {
             Motor_Driver.Set_Target_Omega_Radian(0.0f);
         }
-
     }
     break;
     case (Booster_Control_Type_SINGLE):
@@ -275,8 +276,16 @@ void Class_Booster::Output()
         Motor_Friction_Left.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
         Motor_Friction_Right.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
 
-        #ifdef Heat_Detect_ENABLE
-        if (FSM_Heat_Detect.Heat + 20 < Referee->Get_Booster_17mm_1_Heat_Max())
+        //调整目标值与实际值相对应，以便从速度环平滑过渡到角度环
+        if (Swtich_To_Angle_Control_Flag == 1)
+        {
+            Drvier_Angle = Motor_Driver.Get_Now_Radian();
+
+            Swtich_To_Angle_Control_Flag = 0;
+        }
+
+#ifdef Heat_Detect_ENABLE
+        if (FSM_Heat_Detect.Heat + 30 < Referee->Get_Booster_17mm_1_Heat_Max())
         {
 
             Drvier_Angle += 2.0f * PI / 9.0f;
@@ -290,6 +299,7 @@ void Class_Booster::Output()
         #endif
         // 点一发立刻停火
         Booster_Control_Type = Booster_Control_Type_CEASEFIRE;
+
     }
     break;
     case (Booster_Control_Type_MULTI):
@@ -330,11 +340,11 @@ void Class_Booster::Output()
         else
         {
             float tmp_omega;
-            tmp_omega = (Default_Driver_Omega - Driver_Omega) / Referee->Get_Booster_17mm_1_Heat_Max() * (FSM_Heat_Detect.Heat + 20.0f) + Driver_Omega;
+            tmp_omega = (Default_Driver_Omega - Driver_Omega) / Referee->Get_Booster_17mm_1_Heat_Max() * (FSM_Heat_Detect.Heat + 30.0f) + Driver_Omega;
             Motor_Driver.Set_Target_Omega_Radian(tmp_omega);
         }
 
-
+        Swtich_To_Angle_Control_Flag = 1;
 
         #endif
         #ifdef Heat_Detect_DISABLE
@@ -345,7 +355,7 @@ void Class_Booster::Output()
         else
         {
             Booster_Control_Type = Booster_Control_Type_CEASEFIRE;
-        }d
+        }
         #endif
         }
     break;

@@ -39,7 +39,7 @@ enum Enum_Booster_Control_Type
     Booster_Control_Type_CEASEFIRE,
     Booster_Control_Type_SINGLE,
     Booster_Control_Type_REPEATED,
-    Booster_Control_Type_MULTI, // 连发
+    Booster_Control_Type_MULTI, 
 };
 
 /**
@@ -154,10 +154,10 @@ protected:
     Enum_Booster_Control_Type Booster_Control_Type = Booster_Control_Type_DISABLE;
     Enum_Friction_Control_Type Friction_Control_Type = Friction_Control_Type_DISABLE;
     // 摩擦轮角速度
-    float Friction_Omega = 750.0f;
+    float Friction_Omega = 750.0f - 50.0f;
     float Target_Bullet_Speed = 23.5f;
     // 拨弹盘实际的目标速度
-    float Driver_Omega = 2.0f * PI;//弹频为每秒9发
+    float Driver_Omega = 2.0f * PI * 2.0f;//弹频为每秒18发
     // 拨弹轮目标绝对角度 加圈数
     float Drvier_Angle = 0.0f;
     // 读写变量

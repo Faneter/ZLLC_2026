@@ -1165,8 +1165,8 @@ void GraphicSendtask(void)
 			}
 			break;
 
-		case 2: // 更新摩擦轮转速
-			FrictSpeed_Draw(JudgeReceiveData.booster_fric_omega_left, JudgeReceiveData.booster_fric_omega_right, 0);
+		case 2: // 更新摩擦轮转速 由于在上下板通讯中删除了左摩擦轮速度数据，因此直接拿右摩擦轮数据覆盖掉
+			FrictSpeed_Draw(JudgeReceiveData.booster_fric_omega_right, JudgeReceiveData.booster_fric_omega_right, 0);
 			break;
 
 		case 3: // 更新云台底盘夹角与自瞄状态
