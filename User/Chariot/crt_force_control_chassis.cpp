@@ -264,8 +264,8 @@ void Class_Chassis::Output_To_Dynamics()
 
         if(Chassis_Control_Type == Chassis_Control_Type_FLLOW__)
         {
-            PID_Velocity_X.Set_Now(vel_acc_X[0]);
-            PID_Velocity_Y.Set_Now(vel_acc_Y[0]);
+            PID_Velocity_X.Set_Now(kalman_Now_VelocityX.Out);
+            PID_Velocity_Y.Set_Now(kalman_Now_VelocityY.Out);
         }
         else
         {

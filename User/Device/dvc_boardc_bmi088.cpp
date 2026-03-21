@@ -22,10 +22,7 @@ static uint8_t write_reg_num = 0;
 
 float gyroDiff[3], gNormDiff;
 
-
 int16_t caliCount = 0;
-
-
 
 static uint8_t write_BMI088_accel_reg_data_error[BMI088_WRITE_ACCEL_REG_NUM][3] =
     {
