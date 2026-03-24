@@ -10,6 +10,7 @@
 #include <string.h>
 #include "usart.h"
 #include <stdio.h>
+#include "dvc_minipc.h"
 
 #define CAP_GRAPHIC_NUM 9 // 超级电容的电量显示细分个数
 #define Robot_ID 46
@@ -585,7 +586,7 @@ void Char_Init(void)
 	Char_Draw(0, Op_Add, 0.80 * SCREEN_LENGTH, 0.60 * SCREEN_WIDTH, 20, sizeof(bullet_num_label), 2, Yellow, BulletNumName, bullet_num_label);
 
 	uint8_t antispintype_label[] = "Antispin :";
-	Char_Draw(0, Op_Add, 0.80 * SCREEN_LENGTH, 0.65 * SCREEN_WIDTH, 20, sizeof(antispintype_label), 2, Yellow, BulletNumName, antispintype_label);
+	Char_Draw(0, Op_Add, 0.80 * SCREEN_LENGTH, 0.65 * SCREEN_WIDTH, 20, sizeof(antispintype_label), 2, Yellow, AntispinType, antispintype_label);
 	/*              MINIPC MODE字符*/
 	uint8_t minipc_mode_label[] = "MINIPC :";
 	Char_Draw(0, Op_Add, 0.80 * SCREEN_LENGTH, 0.55 * SCREEN_WIDTH, 20, sizeof(minipc_mode_label), 2, Yellow, MiniPCModeLabelName, minipc_mode_label);
@@ -907,7 +908,7 @@ void Booster_Heat_Draw(uint16_t heat, uint16_t heat_max, uint8_t Init_Flag)
 	}
 	else
 	{
-		// 计算填充长度（归一化比例 * 总长0.3*屏幕长度）
+		// 计算填充长度（归一化比例 * 总长0.5*宽度）
 		float ratio = (heat_max > 0) ? ((float)heat / heat_max) : 0.0f;
 		if (ratio > 1.0f)
 			ratio = 1.0f;
@@ -920,6 +921,30 @@ void Booster_Heat_Draw(uint16_t heat, uint16_t heat_max, uint8_t Init_Flag)
 		memcpy(data_pack, (uint8_t *)P_graphic_data, DRAWING_PACK);
 		Send_UIPack(Drawing_Graphic1_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK);
 	}
+}
+
+/**
+ * @brief 根据自瞄是否开启，在准星处较为明显的显示状态
+ *
+ * @param gimbal_control_type 自瞄状态，根据此状态修改UI绘图的颜色
+ * @param init_flag 初始化标志 >1:初始化绘制，0:更新
+ */
+void MiniPC_Online_Status_UI(uint8_t minipc_status, uint8_t init_flag)
+{
+	static uint8_t OnlineStatusName[] = "Osn";
+
+	graphic_data_struct_t *P_graphic_data;
+	Enum_Graphic_Color color = (minipc_status == MiniPC_Status_ENABLE) ? Graphic_Color_ORANGE : Graphic_Color_GREEN;
+	uint8_t operation = (init_flag == 0) ? Op_Change : Op_Add;
+
+	P_graphic_data = Rectangle_Draw(
+		0, operation,
+		SCREEN_LENGTH * 0.33, SCREEN_WIDTH * 0.33,
+		SCREEN_LENGTH * 0.67, SCREEN_WIDTH * 0.67,
+		5, color, OnlineStatusName);
+
+	memcpy(data_pack, (uint8_t *)P_graphic_data, DRAWING_PACK);
+	Send_UIPack(Drawing_Graphic1_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK);
 }
 
 /**********************************************************************************************************
@@ -971,6 +996,7 @@ void GraphicSendtask(void)
 		RadarDoubleDamage_Draw(Init_Cnt);
 		MiniPCMode_Draw(Init_Cnt);																				 // 添加MiniPC模式初始化
 		Booster_Heat_Draw(JudgeReceiveData.Booster_17mm_Heat, JudgeReceiveData.Booster_17mm_Heat_Max, Init_Cnt); // 枪口热量
+		MiniPC_Online_Status_UI(JudgeReceiveData.Minipc_Status, Init_Cnt);
 
 		Init_Cnt--;
 
@@ -1094,6 +1120,7 @@ void GraphicSendtask(void)
 			break;
 		case 2: // MiniPC状态
 			// MiniPC_Aim_Change(0);
+			MiniPC_Online_Status_UI(JudgeReceiveData.Minipc_Status, 0);
 			Last_JudgeReceiveData.Minipc_Status = JudgeReceiveData.Minipc_Status;
 			break;
 		case 3: // 发射机构用户控制类型
