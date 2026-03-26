@@ -14,6 +14,7 @@
 #include "ita_chariot.h"
 #include "drv_math.h"
 #include "dvc_GraphicsSendTask.h"
+#include "dvc_dwt.h"
 /* Private macros ------------------------------------------------------------*/
 
 /* Private types -------------------------------------------------------------*/
@@ -1093,7 +1094,9 @@ void Class_Chariot::CAN_Chassis_Tx_Gimbal_Callback_1()
  * @brief 计算回调函数
  *
  */
-
+float Dt_Omega;
+uint32_t Last_Cnt_Omega;
+float Force_Control_Omega;
 void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
 {
 #ifdef CHASSIS
@@ -1112,7 +1115,11 @@ void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
     {
         Chassis.Set_Target_Omega(Chassis.Get_Spin_Omega());
         //补充力控底盘
-        Force_Control_Chassis.Set_Target_Omega(6 * PI);
+        Dt_Omega += DWT_GetDeltaT(&Last_Cnt_Omega);
+
+        Force_Control_Omega = (4.0f + 1.0f * sinf(2.0 * PI * Dt_Omega)) * PI;
+
+        Force_Control_Chassis.Set_Target_Omega(Force_Control_Omega);
     }
     else if (Force_Control_Chassis.Get_Chassis_Control_Type() == Chassis_Control_Type_FLLOW__)
     {
@@ -1167,6 +1174,8 @@ void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
     }
     //1ms周期调用卡尔曼观测器
     Force_Control_Chassis.TIM_1ms_Kalmancale_PeriodElapsedCallback();
+
+
 #elif defined(GIMBAL)
 
     static uint8_t mod2 = 0;
