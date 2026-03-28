@@ -127,7 +127,7 @@ public:
     void TIM_Calculate_PeriodElapsedCallback();
     void Output();
 
-    Enum_Booster_User_Control_Type Booster_User_Control_Type = Booster_User_Control_Type_SINGLE;
+    Enum_Booster_User_Control_Type Booster_User_Control_Type = Booster_User_Control_Type_MULTI;
 
 protected:
     // 初始化相关常量
