@@ -167,10 +167,10 @@ void Class_Supercap::Output()
         case Supercap_Usage_Stratage_Referee_BufferPower:
         {
             energyBuffer = Referee->Get_Chassis_Energy_Buffer();
-            // 归一化到[-1, 1]范围，中心点在40J
-            normalized = (energyBuffer - 40.0f) / 20.0f;
-            // 使用tanh实现平滑过渡，范围[-20, 20]
-            bufferPower = 20.0f * tanhf(normalized);
+            // 归一化到[-1, 1]范围，中心点在30J
+            normalized = (energyBuffer - 30.0f) / 30.0f;
+            // 使用tanh实现平滑过渡，范围[-30, 30]
+            bufferPower = 30.0f * tanhf(normalized);
 
             Chassis_Device_LimitPower = Referee->Get_Chassis_Power_Max() + bufferPower;
             Limit_Power = Referee->Get_Chassis_Power_Max() + bufferPower;
