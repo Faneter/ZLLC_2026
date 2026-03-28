@@ -349,7 +349,7 @@ void Class_Gimbal::Init()
     Motor_Yaw.Init(&hcan2, DJI_Motor_ID_0x206, DJI_Motor_Control_Method_IMU_ANGLE, 2048);
 
     // pitch轴电机
-    Motor_Pitch.PID_Angle.Init(50.0f, 0.0f, 0.3f, 0.0f, 10000000, 10000000,0.0f, 0.0f, 0, 0.001f, 0.0f, PID_D_First_ENABLE);
+    Motor_Pitch.PID_Angle.Init(50.0f, 0.0f, 0.3f, 0.0f, 10000000, 10000000, 0.0f, 0.0f, 0, 0.001f, 0.0f, PID_D_First_ENABLE);
     Motor_Pitch.PID_Omega.Init(100.0f, 2000.0f, 0.0f, 0, Motor_Pitch.Get_Output_Max(), Motor_Pitch.Get_Output_Max(), 0.0f, 0.0f, 0.0f, 0.001f, 0.8f);
     Motor_Pitch.PID_Torque.Init(0.8f, 100.0f, 0.0f, 0.0f, Motor_Pitch.Get_Output_Max(), Motor_Pitch.Get_Output_Max());
     Motor_Pitch.IMU = &Boardc_BMI;
@@ -368,7 +368,7 @@ void Class_Gimbal::Init()
 float temp_err = 0.0f;
 float temp_target_angle = 0.0f;
 uint8_t cnt[2];
-float Tmp_Target_Yaw_Angle = 0.0f,Tmp_Ture_Yaw_Angle = 0.0f;
+float Tmp_Target_Yaw_Angle = 0.0f, Tmp_Ture_Yaw_Angle = 0.0f;
 void Class_Gimbal::Output()
 {
     if (Gimbal_Control_Type == Gimbal_Control_Type_DISABLE)
@@ -408,14 +408,14 @@ void Class_Gimbal::Output()
         }
 
         Tmp_Target_Yaw_Angle = Target_Yaw_Angle;
-        Tmp_Ture_Yaw_Angle = Motor_Yaw.Get_True_Angle_Yaw();//IMU获取的真实角度
+        Tmp_Ture_Yaw_Angle = Motor_Yaw.Get_True_Angle_Yaw(); // IMU获取的真实角度
 
-         //限制角度范围 处理yaw轴180度问题
-        while((Tmp_Target_Yaw_Angle-Tmp_Ture_Yaw_Angle)>Max_Yaw_Angle)
+        // 限制角度范围 处理yaw轴180度问题
+        while ((Tmp_Target_Yaw_Angle - Tmp_Ture_Yaw_Angle) > Max_Yaw_Angle)
         {
             Tmp_Target_Yaw_Angle -= (2 * Max_Yaw_Angle);
         }
-        while((Tmp_Target_Yaw_Angle-Tmp_Ture_Yaw_Angle)<-Max_Yaw_Angle)
+        while ((Tmp_Target_Yaw_Angle - Tmp_Ture_Yaw_Angle) < -Max_Yaw_Angle)
         {
             Tmp_Target_Yaw_Angle += (2 * Max_Yaw_Angle);
         }
@@ -462,7 +462,7 @@ void Class_Gimbal::Output()
 
         // pitch限位
         Math_Constrain(&Target_Pitch_Angle, Min_Pitch_Angle, Max_Pitch_Angle);
-        //Math_Constrain(&Target_Yaw_Angle, -Max_Yaw_Angle, Max_Yaw_Angle);
+        // Math_Constrain(&Target_Yaw_Angle, -Max_Yaw_Angle, Max_Yaw_Angle);
         // 设置目标角度
         Motor_Yaw.Set_Target_Angle(Tmp_Target_Yaw_Angle);
         Motor_Pitch.Set_Target_Angle(Target_Pitch_Angle);
@@ -482,7 +482,7 @@ void Class_Gimbal::TIM_Calculate_PeriodElapsedCallback()
     Motor_Pitch.Transform_Angle();
 
     static uint8_t gimbal_mod2 = 0;
-    gimbal_mod2 ++;
+    gimbal_mod2++;
 
     Motor_Yaw.TIM_PID_PeriodElapsedCallback();
     Motor_Pitch.TIM_PID_PeriodElapsedCallback();

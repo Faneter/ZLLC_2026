@@ -21,8 +21,8 @@
 // #define IMAGE_VT12
 #define IMAGE_VT13
 
- #define CHASSIS
-//#define GIMBAL
+#define CHASSIS
+// #define GIMBAL
 
 #ifdef GIMBAL
 
@@ -37,8 +37,6 @@
 #define POWER_LIMIT
 
 #ifdef POWER_LIMIT
-
-
 
 #define POWER_LIMIT_BUFFER_LOOP
 #define BIG_P_ALLOCATE
