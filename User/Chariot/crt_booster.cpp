@@ -171,9 +171,59 @@ void Class_FSM_Antijamming::Reload_TIM_Status_PeriodElapsedCallback()
     {
         // 卡弹处理状态
 
-        if (Status[Now_Status_Serial].Time >= 300)
+        // if (Status[Now_Status_Serial].Time >= 300)
+        // {
+        //     // 长时间回拨->正常状态
+        //     Set_Status(0);
+        // }
+
+        static uint16_t cnt1 = 0,cnt2 = 0;
+        if(abs(Booster->Motor_Driver.Get_Now_Torque()) < Booster->Driver_Torque_Threshold)
         {
-            // 长时间回拨->正常状态
+            cnt1++;
+            cnt2=0;
+            if(cnt1 >= 200)
+            {
+                // 长时间回拨->正常状态
+                cnt1 = 0;
+                Set_Status(0);
+            }
+        }
+        else
+        {
+            cnt1 = 0;
+            cnt2++;
+            if(cnt2>=200)
+            {
+                cnt2=0;
+                Set_Status(4);
+            }
+        }
+    
+    }
+    break;
+    case (4):
+    {
+        Booster->Output();
+        
+        Booster->Motor_Driver.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OPENLOOP);
+        
+        Booster->Motor_Driver.PID_Angle.Set_Integral_Error(0.0f);
+        Booster->Motor_Driver.PID_Omega.Set_Integral_Error(0.0f);
+        Booster->Motor_Driver.Set_Out(0.0f);
+        Booster->Drvier_Angle = Booster->Motor_Driver.Get_Now_Radian();
+
+        static uint32_t last_time_alive = 0;
+        uint32_t time_alive = HAL_GetTick();
+
+        if(Status[Now_Status_Serial].Time == 1)
+        {
+            last_time_alive = time_alive;
+        }
+
+        if(time_alive - last_time_alive > 2000)
+        {
+            last_time_alive = time_alive;
             Set_Status(0);
         }
     }
@@ -193,7 +243,7 @@ void Class_Booster::Init()
 
     // 正常状态, 卡弹嫌疑状态, 卡弹反应状态, 卡弹处理状态
     FSM_Antijamming.Booster = this;
-    FSM_Antijamming.Init(4, 0);
+    FSM_Antijamming.Init(5, 0);
 
     // 拨弹盘电机
     Motor_Driver.PID_Angle.Init(40.0f, 0.1f, 0.0f, 0.0f, Default_Driver_Omega, Default_Driver_Omega);
