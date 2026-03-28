@@ -253,7 +253,7 @@ public:
     Enum_MiniPC_Status MiniPC_Status = MiniPC_Status_DISABLE;
     // 裁判系统UI刷新状态
     Enum_Referee_UI_Refresh_Status Referee_UI_Refresh_Status = Referee_UI_Refresh_Status_DISABLE;
-    Enum_Booster_User_Control_Type Booster_User_Control_Type = Booster_User_Control_Type_SINGLE;
+    Enum_Booster_User_Control_Type Booster_User_Control_Type = Booster_User_Control_Type_MULTI;
     Enum_MiniPC_Type MiniPC_Type = MiniPC_Type_Nomal;
 		Enum_Antispin_Type Antispin_Type=Antispin_On;
 		
@@ -271,7 +271,7 @@ protected:
 
 #ifdef CHASSIS
     // 底盘标定参考正方向角度(数据来源yaw电机)
-    float Reference_Angle =2.34929156;
+    float Reference_Angle = 3.7751f;
     // float Reference_Angle =2.34929156 -0.52f;
     // 小陀螺云台坐标系稳定偏转角度 用于矫正
     float Offset_Angle = 0.0f; // 7.5°
