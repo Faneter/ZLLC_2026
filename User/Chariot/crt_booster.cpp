@@ -347,68 +347,90 @@ void Class_Booster::Output()
                 DJI_Motor_Control_Method_OMEGA);
 
 #ifdef Heat_Detect_ENABLE
-            // float Tmp_Heat = 0.0f;
-            // if(Referee->Get_Referee_Status() == Referee_Status_ENABLE)
-            // {
-            //     Tmp_Heat = Referee->Get_Booster_17mm_1_Heat_CD()
-            //     Default_Driver_Omega = Referee->Get_Booster_17mm_1_Heat_CD() / 10.0f
-            //     / 8.0f * 2.0f * PI;
-            // }
             // 根据冷却计算拨弹盘默认速度, 此速度下与冷却均衡
             Default_Driver_Omega =
                 Referee->Get_Booster_17mm_1_Heat_CD() / 10.0f / 9.0f * 2.0f * PI;
-            uint16_t max_heat  = Referee->Get_Booster_17mm_1_Heat_Max();
-            uint16_t rest_heat = max_heat - FSM_Heat_Detect.Heat;
             // 热量控制
-            float target_omega             = 0.0f;
-            constexpr float rad_per_bullet = 2.0f * PI / 9.0f; // 假设一圈9发
+            // 机器人冷却(单位：点/s)
+            float a = static_cast<float>(Referee->Get_Booster_17mm_1_Heat_CD());
+            // 枪口还能利用的热量上限(单位：点)
+            float m = static_cast<float>(Referee->Get_Booster_17mm_1_Heat_Max() - FSM_Heat_Detect.Heat);
+            // 每射击一发消耗热量(单位：点)
+            constexpr float d = 10.0f;
+            // 射速(单位：发/s)
+            static float shoot_speed = 0.0f;
 
-            static uint16_t shoot_count     = 0;
+            // 本周期射击的总持续时间(单位：ms)
+            static uint16_t ShootTime = 0;
+            // 本周期射击的实际时间(单位：ms)
             static uint16_t shoot_time      = 0;
             static uint16_t last_shoot_time = 0;
 
-            if (rest_heat >= 100) {
-                target_omega = (Driver_Omega <= Default_Driver_Omega)
-                                   ? Driver_Omega
-                                   : Default_Driver_Omega;
-                shoot_count  = 0;
-            } else if (rest_heat >= 20 && rest_heat <= 100) {
-                float cd = static_cast<float>(Referee->Get_Booster_17mm_1_Heat_CD());
+            // 最终得出的拨弹盘转速
+            float target_omega = 0.0f;
+            // 射速与拨弹盘转速的转换关系
+            constexpr float rad_per_bullet = 2.0f * PI / 9.0f; // 假设一圈9发
 
+#define VAL_LIMIT(val, min, max)           \
+    do {                                   \
+        (val) = ((val) < (min))   ? (min)  \
+                : ((val) > (max)) ? (max)  \
+                                  : (val); \
+    } while (0)
+
+            if (m >= 100) {
+                target_omega = Driver_Omega;
+                shoot_time   = 0;
+            } else if (m >= 20 && m <= 100) {
                 static float shoot_speed = 0.0f;
-                if (shoot_count == 0) {
-                    shoot_time = (rest_heat + 2 * cd) * 10;
-                    if (rest_heat < 50) {
-                        shoot_speed = rad_per_bullet * ((10 * rest_heat - cd - 3 * 10) /
-                                                            (10 * shoot_time / 100.0f) +
-                                                        cd / 10.0f);
+                if (shoot_time == 0) {
+                    /**
+                     * @brief 决定本次射击周期要持续多久
+                     *
+                     * @param (m + k * a) (要经过多少个裁判系统解算周期) 按照同济大学的解释如下：
+                     * > 根据热量上限和冷却决定射击策略，计算得当射击时间为m（热量上限）+1*a（冷却速率）时基本可以抹除冷却优先和爆发优先的差距，即两者各级对应射速相近
+                     * > 当k增大时，差距射击频率差距主要体现在低等级（爆发高，冷却低），等级越高影响越小。爆发模式下各等级射频更加均匀且持续时间更长，
+                     * > 冷却模式正好相反，低等级射频低，高等级射频高且持续时间短，可灵活选择m+k*a
+                     * 详见此链接：https://bbs.robomaster.com/article/630409
+                     *
+                     * 最终乘以100是为了将单位统一为ms，因为此函数的执行周期为1ms，而裁判系统的结算频率为10Hz。
+                     */
+                    ShootTime = (m + 2 * a) * 100;
+                    VAL_LIMIT(ShootTime, 1000, 5600);
+                    // 分级射速
+                    if (m < 50) {
+                        shoot_speed = (d * m - a - 3 * d) /
+                                          (d * ShootTime / 1000.0f) +
+                                      a / d;
                     } else {
-                        shoot_speed = rad_per_bullet * ((10 * rest_heat - cd - 7 * 10) /
-                                                            (10 * shoot_time / 100.0f) +
-                                                        cd / 10.0f);
+                        shoot_speed = (d * m - a - 7 * d) /
+                                          (10 * ShootTime / 1000.0f) +
+                                      a / d;
                     }
-                } else if (0 < shoot_count && shoot_count < shoot_time) {
-                    target_omega = shoot_speed;
+                } else if (0 < shoot_time && shoot_time < ShootTime) {
+                    target_omega = shoot_speed * rad_per_bullet;
+                    VAL_LIMIT(target_omega, 0.0f, 18.0f);
                 } else {
-                    target_omega = rad_per_bullet * cd / 10.0f;
-                    if (target_omega < 1.0f) {
+                    target_omega = rad_per_bullet * a / d;
+                    if (target_omega < 1.0f * rad_per_bullet) {
                         target_omega = 0.0f;
                     }
+                    VAL_LIMIT(target_omega, 0.0f, 18.0f);
                 }
-                if (shoot_count < shoot_time) {
-                    shoot_count++;
+                if (shoot_time < ShootTime) {
+                    shoot_time++;
                 }
-                last_shoot_time = shoot_time;
-                if (rest_heat >= 40) {
-                    if (shoot_count >= shoot_time) {
-                        shoot_count = 0;
+                last_shoot_time = ShootTime;
+                if (m >= 40) {
+                    if (shoot_time >= ShootTime) {
+                        shoot_time = 0;
                     }
-                } else if (rest_heat <= 32) {
-                    shoot_count = last_shoot_time;
+                } else if (m <= 32) {
+                    shoot_time = last_shoot_time;
                 }
-            } else if (rest_heat <= 30) {
+            } else if (m <= 20) {
                 target_omega = 0.0f;
-                shoot_count  = 0;
+                shoot_time   = 0;
             }
             Motor_Driver.Set_Target_Omega_Radian(target_omega);
 
