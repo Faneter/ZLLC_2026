@@ -382,12 +382,11 @@ void Class_Booster::Output()
                 target_omega = Driver_Omega;
                 shoot_time   = 0;
             } else if (m >= 20 && m <= 100) {
-                static float shoot_speed = 0.0f;
                 if (shoot_time == 0) {
                     /**
                      * @brief 决定本次射击周期要持续多久
                      *
-                     * @param (m + k * a) (要经过多少个裁判系统解算周期) 按照同济大学的解释如下：
+                     * @param (m + k * a) 要经过多少个裁判系统解算周期 按照同济大学的解释如下：
                      * > 根据热量上限和冷却决定射击策略，计算得当射击时间为m（热量上限）+1*a（冷却速率）时基本可以抹除冷却优先和爆发优先的差距，即两者各级对应射速相近
                      * > 当k增大时，差距射击频率差距主要体现在低等级（爆发高，冷却低），等级越高影响越小。爆发模式下各等级射频更加均匀且持续时间更长，
                      * > 冷却模式正好相反，低等级射频低，高等级射频高且持续时间短，可灵活选择m+k*a
@@ -399,11 +398,15 @@ void Class_Booster::Output()
                     VAL_LIMIT(ShootTime, 1000, 5600);
                     // 分级射速
                     if (m < 50) {
-                        shoot_speed = (d * m - a - 3 * d) /
+                        constexpr float kNormalFactor = 3.0f;
+
+                        shoot_speed = (d * m - a - kNormalFactor * d) /
                                           (d * ShootTime / 1000.0f) +
                                       a / d;
                     } else {
-                        shoot_speed = (d * m - a - 7 * d) /
+                        constexpr float kBurstFactor = 7.0f;
+
+                        shoot_speed = (d * m - a - kBurstFactor * d) /
                                           (10 * ShootTime / 1000.0f) +
                                       a / d;
                     }
