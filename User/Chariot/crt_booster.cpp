@@ -13,6 +13,8 @@
 
 #include "crt_booster.h"
 
+#include "drv_math.h"
+
 /* Private macros ------------------------------------------------------------*/
 #define Heat_Detect_ENABLE
 // #define Heat_Detect_DISABLE
@@ -371,13 +373,6 @@ void Class_Booster::Output()
             // 射速与拨弹盘转速的转换关系
             constexpr float rad_per_bullet = 2.0f * PI / 9.0f; // 假设一圈9发
 
-#define VAL_LIMIT(val, min, max)           \
-    do {                                   \
-        (val) = ((val) < (min))   ? (min)  \
-                : ((val) > (max)) ? (max)  \
-                                  : (val); \
-    } while (0)
-
             if (m >= 100) {
                 target_omega = Driver_Omega;
                 shoot_time   = 0;
@@ -395,7 +390,7 @@ void Class_Booster::Output()
                      * 最终乘以100是为了将单位统一为ms，因为此函数的执行周期为1ms，而裁判系统的结算频率为10Hz。
                      */
                     ShootTime = (m + 2 * a) * 100;
-                    VAL_LIMIT(ShootTime, 1000, 5600);
+                    Math_Constrain<uint16_t>(&ShootTime, 1000, 5600);
                     // 分级射速
                     if (m < 50) {
                         constexpr float kNormalFactor = 3.0f;
@@ -407,18 +402,18 @@ void Class_Booster::Output()
                         constexpr float kBurstFactor = 7.0f;
 
                         shoot_speed = (d * m - a - kBurstFactor * d) /
-                                          (10 * ShootTime / 1000.0f) +
+                                          (d * ShootTime / 1000.0f) +
                                       a / d;
                     }
                 } else if (0 < shoot_time && shoot_time < ShootTime) {
                     target_omega = shoot_speed * rad_per_bullet;
-                    VAL_LIMIT(target_omega, 0.0f, 18.0f);
+                    Math_Constrain<float>(&target_omega, 0.0f, 18.0f);
                 } else {
                     target_omega = rad_per_bullet * a / d;
                     if (target_omega < 1.0f * rad_per_bullet) {
                         target_omega = 0.0f;
                     }
-                    VAL_LIMIT(target_omega, 0.0f, 18.0f);
+                    Math_Constrain<float>(&target_omega, 0.0f, 18.0f);
                 }
                 if (shoot_time < ShootTime) {
                     shoot_time++;
