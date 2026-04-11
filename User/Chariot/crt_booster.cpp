@@ -292,6 +292,9 @@ void Class_Booster::Output()
             } else if (Motor_Driver.Get_Control_Method() ==
                        DJI_Motor_Control_Method_OMEGA) {
                 Motor_Driver.Set_Target_Omega_Radian(0.0f);
+                Motor_Driver.PID_Angle.Set_Integral_Error(0.0f);
+                Motor_Driver.PID_Omega.Set_Integral_Error(0.0f);
+                Motor_Driver.Set_Out(0.0f);
             }
         } break;
         case (Booster_Control_Type_SINGLE): {
@@ -356,7 +359,7 @@ void Class_Booster::Output()
             // 机器人冷却(单位：点/s)
             float a = static_cast<float>(Referee->Get_Booster_17mm_1_Heat_CD());
             // 枪口还能利用的热量上限(单位：点)
-            float m = static_cast<float>(Referee->Get_Booster_17mm_1_Heat_Max() - FSM_Heat_Detect.Heat);
+            float m = static_cast<float>(Referee->Get_Booster_17mm_1_Heat_Max() - Referee->Get_Booster_17mm_1_Heat());
             // 每射击一发消耗热量(单位：点)
             constexpr float d = 10.0f;
             // 射速(单位：发/s)
