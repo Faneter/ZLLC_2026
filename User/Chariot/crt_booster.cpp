@@ -359,7 +359,7 @@ void Class_Booster::Output()
             // 机器人冷却(单位：点/s)
             float a = static_cast<float>(Referee->Get_Booster_17mm_1_Heat_CD());
             // 枪口还能利用的热量上限(单位：点)
-            float m = static_cast<float>(Referee->Get_Booster_17mm_1_Heat_Max() - Referee->Get_Booster_17mm_1_Heat());
+            float m = static_cast<float>(Referee->Get_Booster_17mm_1_Heat_Max() - FSM_Heat_Detect.Heat);
             // 每射击一发消耗热量(单位：点)
             constexpr float d = 10.0f;
             // 射速(单位：发/s)
@@ -379,7 +379,7 @@ void Class_Booster::Output()
             if (m >= 100) {
                 target_omega = Driver_Omega;
                 shoot_time   = 0;
-            } else if (m >= 20 && m <= 100) {
+            } else if (m >= 30 && m <= 100) {
                 if (shoot_time == 0) {
                     /**
                      * @brief 决定本次射击周期要持续多久
@@ -429,7 +429,7 @@ void Class_Booster::Output()
                 } else if (m <= 32) {
                     shoot_time = last_shoot_time;
                 }
-            } else if (m <= 20) {
+            } else if (m <= 30) {
                 target_omega = 0.0f;
                 shoot_time   = 0;
             }
