@@ -47,6 +47,10 @@ typedef struct
     float YawTotalAngle;
 } INS_t;
 
+typedef struct {
+    float w, x, y, z;
+} Quaternion;
+
 enum Enum_IMU_Status {
     IMU_Status_DISABLE = 0,
     IMU_Status_ENABLE,
@@ -77,10 +81,7 @@ public:
     float Get_Gyro_Pitch(void);
     float Get_Gyro_Yaw(void);
 
-    float Get_Q_X(void);
-    float Get_Q_Y(void);
-    float Get_Q_Z(void);
-    float Get_Q_W(void);
+    Quaternion Get_Quaternion(void);
 
     inline float Get_MotionAccel_b_x(void)
     { return INS.MotionAccel_b[0]; };

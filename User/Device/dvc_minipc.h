@@ -365,10 +365,7 @@ protected:
     float Tx_Angle_Yaw;
     float Tx_Angle_Gyro_Yaw;
 
-    float Tx_Q_X;
-    float Tx_Q_Y;
-    float Tx_Q_Z;
-    float Tx_Q_W;
+    Quaternion Tx_Quaternion;
 
     float Rx_Angle_Roll;
     float Rx_Angle_Pitch;
@@ -719,10 +716,7 @@ void Class_MiniPC::Transform_Angle_Tx()
     Tx_Angle_Roll  = IMU->Get_Angle_Pitch();
     Tx_Angle_Yaw   = IMU->Get_Angle_Yaw();
 
-    Tx_Q_X = IMU->Get_Q_X();
-    Tx_Q_Y = IMU->Get_Q_Y();
-    Tx_Q_Z = IMU->Get_Q_Z();
-    Tx_Q_W = IMU->Get_Q_W();
+    Tx_Quaternion = IMU->Get_Quaternion();
 }
 
 #endif

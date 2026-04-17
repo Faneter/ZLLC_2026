@@ -200,24 +200,14 @@ float Class_IMU::Get_Rad_Yaw(void)
     return (INS.Yaw / 180.f * PI);
 }
 
-float Class_IMU::Get_Q_X(void)
+Quaternion Class_IMU::Get_Quaternion(void)
 {
-    return (INS.q[0]);
-}
-
-float Class_IMU::Get_Q_Y(void)
-{
-    return (INS.q[1]);
-}
-
-float Class_IMU::Get_Q_Z(void)
-{
-    return (INS.q[2]);
-}
-
-float Class_IMU::Get_Q_W(void)
-{
-    return (INS.q[3]);
+    return Quaternion{
+        .w = INS.q[0],
+        .x = INS.q[1],
+        .y = INS.q[2],
+        .z = INS.q[3],
+    };
 }
 
 Enum_IMU_Status Class_IMU::Get_IMU_Status(void)
