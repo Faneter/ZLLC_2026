@@ -377,6 +377,7 @@ void Class_Booster::Output()
             constexpr float rad_per_bullet = 2.0f * PI / 9.0f; // 假设一圈9发
 
             if (m >= 100) {
+                // 热量充裕时
                 target_omega = Driver_Omega;
                 shoot_time   = 0;
             } else if (m >= 30 && m <= 100) {
@@ -409,9 +410,11 @@ void Class_Booster::Output()
                                       a / d;
                     }
                 } else if (0 < shoot_time && shoot_time < ShootTime) {
+                    // 在射击周期内，按原计划射弹
                     target_omega = shoot_speed * rad_per_bullet;
                     Math_Constrain<float>(&target_omega, 0.0f, 18.0f);
                 } else {
+                    // 超出了射击周期，贴近冷却回复速度射弹
                     target_omega = rad_per_bullet * a / d;
                     if (target_omega < 1.0f * rad_per_bullet) {
                         target_omega = 0.0f;
@@ -423,13 +426,16 @@ void Class_Booster::Output()
                 }
                 last_shoot_time = ShootTime;
                 if (m >= 40) {
+                    // 射击周期结束，热量还有余裕，重新进入下一个射击周期
                     if (shoot_time >= ShootTime) {
                         shoot_time = 0;
                     }
                 } else if (m <= 32) {
+                    // 热量不足，强制进入下一个射击周期
                     shoot_time = last_shoot_time;
                 }
             } else if (m <= 30) {
+                // 热量不足，强制停机
                 target_omega = 0.0f;
                 shoot_time   = 0;
             }
