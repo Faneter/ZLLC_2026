@@ -716,7 +716,16 @@ void Class_MiniPC::Transform_Angle_Tx()
     Tx_Angle_Roll  = IMU->Get_Angle_Pitch();
     Tx_Angle_Yaw   = IMU->Get_Angle_Yaw();
 
-    Tx_Quaternion = IMU->Get_Quaternion();
+    // 此处IMU Pitch和Roll为反的，故在此调换
+    float Yaw_rad   = IMU->Get_Rad_Yaw();
+    float Pitch_rad = IMU->Get_Rad_Roll();
+    float Roll_rad  = IMU->Get_Rad_Pitch();
+
+    // 将左手系的数据转换为右手系
+    Tx_Quaternion.w = arm_cos_f32(Roll_rad / 2.0f) * arm_cos_f32(Pitch_rad / 2.0f) * arm_cos_f32(Yaw_rad / 2.0f) - arm_sin_f32(Roll_rad / 2.0f) * arm_sin_f32(Pitch_rad / 2.0f) * arm_sin_f32(Yaw_rad / 2.0f);
+    Tx_Quaternion.x = arm_sin_f32(Roll_rad / 2.0f) * arm_cos_f32(Pitch_rad / 2.0f) * arm_cos_f32(Yaw_rad / 2.0f) + arm_cos_f32(Roll_rad / 2.0f) * arm_sin_f32(Pitch_rad / 2.0f) * arm_sin_f32(Yaw_rad / 2.0f);
+    Tx_Quaternion.y = arm_cos_f32(Roll_rad / 2.0f) * arm_sin_f32(Pitch_rad / 2.0f) * arm_cos_f32(Yaw_rad / 2.0f) - arm_sin_f32(Roll_rad / 2.0f) * arm_cos_f32(Pitch_rad / 2.0f) * arm_sin_f32(Yaw_rad / 2.0f);
+    Tx_Quaternion.z = arm_cos_f32(Roll_rad / 2.0f) * arm_cos_f32(Pitch_rad / 2.0f) * arm_sin_f32(Yaw_rad / 2.0f) + arm_sin_f32(Roll_rad / 2.0f) * arm_sin_f32(Pitch_rad / 2.0f) * arm_cos_f32(Yaw_rad / 2.0f);
 }
 
 #endif

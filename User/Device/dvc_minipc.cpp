@@ -78,8 +78,8 @@ void Class_MiniPC::Data_Process()
     // 将CAN接收到的数据转换为实际值 (除以1000转换回浮点数)
     Control   = Pack_Rx.control;
     Shoot     = Pack_Rx.shoot;
-    tmp_yaw   = Pack_Rx.yaw / 1000.0f;
-    tmp_pitch = Pack_Rx.pitch / 1000.0f;
+    tmp_yaw   = Pack_Rx.yaw / 10000.0f;
+    tmp_pitch = Pack_Rx.pitch / 10000.0f;
 
     // Self_aim(target_x, target_y, target_z + camera_distance, &tmp_yaw, &tmp_pitch, &Distance);
     Rx_Angle_Pitch = tmp_pitch * 180.0f / PI;
@@ -123,10 +123,10 @@ void Class_MiniPC::Output()
     Pack_Tx_CAN_B.game_stage  = (Enum_MiniPC_Game_Stage)Referee->Get_Game_Stage();
     Pack_Tx_CAN_B.target_type = Get_MiniPC_Type();
 
-    Pack_Tx_CAN_A.x = Tx_Quaternion.x * 1000.0f;
-    Pack_Tx_CAN_A.y = Tx_Quaternion.y * 1000.0f;
-    Pack_Tx_CAN_A.z = Tx_Quaternion.z * 1000.0f;
-    Pack_Tx_CAN_A.w = Tx_Quaternion.w * 1000.0f;
+    Pack_Tx_CAN_A.x = Tx_Quaternion.x * 10000.0f;
+    Pack_Tx_CAN_A.y = Tx_Quaternion.y * 10000.0f;
+    Pack_Tx_CAN_A.z = Tx_Quaternion.z * 10000.0f;
+    Pack_Tx_CAN_A.w = Tx_Quaternion.w * 10000.0f;
     memcpy(CAN_Tx_Data_A, &Pack_Tx_CAN_A, sizeof(Pack_tx_can_t_A));
     memcpy(CAN_Tx_Data_B, &Pack_Tx_CAN_B, sizeof(Pack_tx_can_t_B));
 
