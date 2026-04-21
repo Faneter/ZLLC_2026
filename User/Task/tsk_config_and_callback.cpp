@@ -62,7 +62,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 uint32_t init_finished = 0;
-bool start_flag = 0;
+bool start_flag        = 0;
 // 机器人控制对象
 Class_Chariot chariot;
 
@@ -81,51 +81,35 @@ Class_Serialplot serialplot;
 #ifdef CHASSIS
 void Chassis_Device_CAN1_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 {
-    switch (CAN_RxMessage->Header.StdId)
-    {
-    case (0x201):
-    {
-        chariot.Chassis.Motor_Wheel[0].CAN_RxCpltCallback(CAN_RxMessage->Data);
-        chariot.Force_Control_Chassis.Motor_Wheel[0].CAN_RxCpltCallback(CAN_RxMessage->Data);
-    }
-    break;
-    case (0x202):
-    {
-        chariot.Chassis.Motor_Wheel[1].CAN_RxCpltCallback(CAN_RxMessage->Data);
-        chariot.Force_Control_Chassis.Motor_Wheel[3].CAN_RxCpltCallback(CAN_RxMessage->Data);
-    }
-    break;
-    case (0x203):
-    {
-        chariot.Chassis.Motor_Wheel[2].CAN_RxCpltCallback(CAN_RxMessage->Data);
-        chariot.Force_Control_Chassis.Motor_Wheel[2].CAN_RxCpltCallback(CAN_RxMessage->Data);
-    }
-    break;
-    case (0x204):
-    {
-        chariot.Chassis.Motor_Wheel[3].CAN_RxCpltCallback(CAN_RxMessage->Data);
-        chariot.Force_Control_Chassis.Motor_Wheel[1].CAN_RxCpltCallback(CAN_RxMessage->Data);
-    }
-    break;
-    case (0x206):
-    {
-    }
-    break;
-    case (0x207):
-    {
-    }
-    break;
-    case (0x67): // 留给超级电容
-    {
-        chariot.Chassis.Supercap.CAN_RxCpltCallback(CAN_RxMessage->Data);
-        chariot.Force_Control_Chassis.Supercap.CAN_RxCpltCallback(CAN_RxMessage->Data);
-    }
-    break;
-    case (0x55):
-    {
-        chariot.Chassis.Supercap.CAN_RxCpltCallback(CAN_RxMessage->Data);
-    }
-    break;
+    switch (CAN_RxMessage->Header.StdId) {
+        case (0x201): {
+            chariot.Chassis.Motor_Wheel[0].CAN_RxCpltCallback(CAN_RxMessage->Data);
+            chariot.Force_Control_Chassis.Motor_Wheel[0].CAN_RxCpltCallback(CAN_RxMessage->Data);
+        } break;
+        case (0x202): {
+            chariot.Chassis.Motor_Wheel[1].CAN_RxCpltCallback(CAN_RxMessage->Data);
+            chariot.Force_Control_Chassis.Motor_Wheel[3].CAN_RxCpltCallback(CAN_RxMessage->Data);
+        } break;
+        case (0x203): {
+            chariot.Chassis.Motor_Wheel[2].CAN_RxCpltCallback(CAN_RxMessage->Data);
+            chariot.Force_Control_Chassis.Motor_Wheel[2].CAN_RxCpltCallback(CAN_RxMessage->Data);
+        } break;
+        case (0x204): {
+            chariot.Chassis.Motor_Wheel[3].CAN_RxCpltCallback(CAN_RxMessage->Data);
+            chariot.Force_Control_Chassis.Motor_Wheel[1].CAN_RxCpltCallback(CAN_RxMessage->Data);
+        } break;
+        case (0x206): {
+        } break;
+        case (0x207): {
+        } break;
+        case (0x67): // 留给超级电容
+        {
+            chariot.Chassis.Supercap.CAN_RxCpltCallback(CAN_RxMessage->Data);
+            chariot.Force_Control_Chassis.Supercap.CAN_RxCpltCallback(CAN_RxMessage->Data);
+        } break;
+        case (0x55): {
+            chariot.Chassis.Supercap.CAN_RxCpltCallback(CAN_RxMessage->Data);
+        } break;
     }
 }
 #endif
@@ -138,28 +122,21 @@ uint8_t test_yaw;
 #ifdef CHASSIS
 void Chassis_Device_CAN2_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 {
-    switch (CAN_RxMessage->Header.StdId)
-    {
-    case (0x206): // 留给yaw电机编码器回传 用于底盘随动
-    {
-        chariot.Motor_Yaw.CAN_RxCpltCallback(CAN_RxMessage->Data);
-    }
-    break;
-    case (0x77): // 留给上板通讯
-    {
-        chariot.CAN_Chassis_Rx_Gimbal_Callback();
-    }
-    break;
-    case (0x78):
-    {
-        chariot.CAN_Chassis_Rx_Gimbal_Callback_1();
-    }
-    break;
-    case (0x201):
-    {
-        test_yaw++;
-    }
-    break;
+    switch (CAN_RxMessage->Header.StdId) {
+        case (0x206): // 留给yaw电机编码器回传 用于底盘随动
+        {
+            chariot.Motor_Yaw.CAN_RxCpltCallback(CAN_RxMessage->Data);
+        } break;
+        case (0x77): // 留给上板通讯
+        {
+            chariot.CAN_Chassis_Rx_Gimbal_Callback();
+        } break;
+        case (0x78): {
+            chariot.CAN_Chassis_Rx_Gimbal_Callback_1();
+        } break;
+        case (0x201): {
+            test_yaw++;
+        } break;
     }
 }
 #endif
@@ -171,37 +148,24 @@ void Chassis_Device_CAN2_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 #ifdef GIMBAL
 void Gimbal_Device_CAN1_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 {
-    switch (CAN_RxMessage->Header.StdId)
-    {
-    case (0xa1):
-    {
-        chariot.MiniPC.CAN_RxCpltCallback(CAN_RxMessage->Data);
-    }
-    break;
-    case (0x203):
-    {
-    }
-    break;
-    case (0x202):
-    {
-        chariot.Booster.Motor_Friction_Left.CAN_RxCpltCallback(CAN_RxMessage->Data);
-    }
-    break;
-    case (0x201):
-    {
-        chariot.Booster.Motor_Friction_Right.CAN_RxCpltCallback(CAN_RxMessage->Data);
-    }
-    break;
-    case (0x205):
-    {
-        chariot.Gimbal.Motor_Pitch.CAN_RxCpltCallback(CAN_RxMessage->Data);
-    }
-    break;
-    case (0x141):
-    {
-        // chariot.Gimbal.Motor_Pitch_LK6010.CAN_RxCpltCallback(CAN_RxMessage->Data);
-    }
-    break;
+    switch (CAN_RxMessage->Header.StdId) {
+        case (0xa1): {
+            chariot.MiniPC.CAN_RxCpltCallback(CAN_RxMessage->Data);
+        } break;
+        case (0x203): {
+        } break;
+        case (0x202): {
+            chariot.Booster.Motor_Friction_Left.CAN_RxCpltCallback(CAN_RxMessage->Data);
+        } break;
+        case (0x201): {
+            chariot.Booster.Motor_Friction_Right.CAN_RxCpltCallback(CAN_RxMessage->Data);
+        } break;
+        case (0x205): {
+            chariot.Gimbal.Motor_Pitch.CAN_RxCpltCallback(CAN_RxMessage->Data);
+        } break;
+        case (0x141): {
+            // chariot.Gimbal.Motor_Pitch_LK6010.CAN_RxCpltCallback(CAN_RxMessage->Data);
+        } break;
     }
 }
 #endif
@@ -213,32 +177,23 @@ void Gimbal_Device_CAN1_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 #ifdef GIMBAL
 void Gimbal_Device_CAN2_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 {
-    switch (CAN_RxMessage->Header.StdId)
-    {
-    case (0x88): // 留给下板通讯
-    {
-        chariot.CAN_Gimbal_Rx_Chassis_Callback();
-    }
-    break;
-    case (0x89):
-    {
-        chariot.CAN_Gimbal_Rx_Chassis_Callback_1();
-    }
-    break;
-    case (0x206): // 保留can2对6020编码器的接口
-    {
-        chariot.Gimbal.Motor_Yaw.CAN_RxCpltCallback(CAN_RxMessage->Data);
-    }
-    break;
-    case (0x201):
-    {
-        chariot.Booster.Motor_Driver.CAN_RxCpltCallback(CAN_RxMessage->Data);
-    }
-    break;
-    case (0x205):
-    {
-    }
-    break;
+    switch (CAN_RxMessage->Header.StdId) {
+        case (0x88): // 留给下板通讯
+        {
+            chariot.CAN_Gimbal_Rx_Chassis_Callback();
+        } break;
+        case (0x89): {
+            chariot.CAN_Gimbal_Rx_Chassis_Callback_1();
+        } break;
+        case (0x206): // 保留can2对6020编码器的接口
+        {
+            chariot.Gimbal.Motor_Yaw.CAN_RxCpltCallback(CAN_RxMessage->Data);
+        } break;
+        case (0x201): {
+            chariot.Booster.Motor_Driver.CAN_RxCpltCallback(CAN_RxMessage->Data);
+        } break;
+        case (0x205): {
+        } break;
     }
 }
 #endif
@@ -306,8 +261,7 @@ void VT13_UART_Callback(uint8_t *Buffer, uint16_t Length)
     chariot.VT13.VT13_UART_RxCpltCallback(Buffer);
 
     // 底盘 云台 发射机构 的控制策略
-    if (*(Buffer + 0) == 0xA9 && *(Buffer + 1) == 0x53)
-    {
+    if (*(Buffer + 0) == 0xA9 && *(Buffer + 1) == 0x53) {
         chariot.TIM_Control_Callback();
     }
 }
@@ -375,8 +329,7 @@ void Task100us_TIM2_Callback()
     GraphicSendtask();
     static uint16_t Referee_Sand_Cnt = 0;
     // //暂无云台tim4任务
-    if (Referee_Sand_Cnt % 50 == 1)
-    {
+    if (Referee_Sand_Cnt % 50 == 1) {
         Task_Loop();
         Referee_Sand_Cnt = 0;
     }
@@ -404,8 +357,7 @@ void Task1ms_TIM5_Callback()
 {
 
     init_finished++;
-    if (init_finished > 2000 && start_flag == 0)
-    {
+    if (init_finished > 2000 && start_flag == 0) {
         // Buzzer.Set_NowTask(BUZZER_DEVICE_OFFLINE_PRIORITY);
         // buzzer_setTask(&buzzer, BUZZER_CALIBRATED_PRIORITY);
         start_flag = 1;
@@ -416,8 +368,7 @@ void Task1ms_TIM5_Callback()
 
     // buzzer_taskScheduler(&buzzer);
     /****************************** 交互层回调函数 1ms *****************************************/
-    if (start_flag == 1)
-    {
+    if (start_flag == 1) {
 #ifdef GIMBAL
         chariot.FSM_Alive_Control.Reload_TIM_Status_PeriodElapsedCallback();
         chariot.FSM_Alive_Control_VT13.Reload_TIM_Status_PeriodElapsedCallback();
@@ -536,43 +487,39 @@ extern "C" void Task_Init()
 extern "C" void Task_Loop()
 {
 #ifdef GIMBAL
-    float now_angle_yaw = chariot.Gimbal.Motor_Yaw.Get_True_Angle_Yaw();
+    float now_angle_yaw    = chariot.Gimbal.Motor_Yaw.Get_True_Angle_Yaw();
     float target_angle_yaw = chariot.Gimbal.MiniPC->Get_Rx_Yaw_Angle();
     // 如果是自瞄开启并且距离装甲板的瞄准弧度小于0.1m
     if (chariot.Gimbal.Get_Gimbal_Control_Type() == Gimbal_Control_Type_MINIPC &&
-        (chariot.Gimbal.MiniPC->Get_Distance() * abs(now_angle_yaw - target_angle_yaw) / 180.0f * PI) < 0.1)
-    {
+        (chariot.Gimbal.MiniPC->Get_Distance() * abs(now_angle_yaw - target_angle_yaw) / 180.0f * PI) < 0.1) {
         chariot.MiniPC_Aim_Status = MinPC_Aim_Status_ENABLE;
-    }
-    else
-    {
+    } else {
         chariot.MiniPC_Aim_Status = MinPC_Aim_Status_DISABLE;
     }
 #endif
 #ifdef CHASSIS
-    if (start_flag == 1)
-    {
+    if (start_flag == 1) {
         static float freq;
         static uint32_t time_s;
         freq = 1 / DWT_GetDeltaT(&time_s);
 
-        JudgeReceiveData.robot_id = chariot.Referee.Get_ID();
-        JudgeReceiveData.Pitch_Angle = chariot.Gimbal_Tx_Pitch_Angle; // pitch角度
-        JudgeReceiveData.Bullet_Status = chariot.Bulletcap_Status;    // 弹舱
-        JudgeReceiveData.Fric_Status = chariot.Fric_Status;           // 摩擦轮
-        JudgeReceiveData.Minipc_Status = chariot.MiniPC_Status;       // 自瞄是否离线
+        JudgeReceiveData.robot_id                  = chariot.Referee.Get_ID();
+        JudgeReceiveData.Pitch_Angle               = chariot.Gimbal_Tx_Pitch_Angle; // pitch角度
+        JudgeReceiveData.Bullet_Status             = chariot.Bulletcap_Status;      // 弹舱
+        JudgeReceiveData.Fric_Status               = chariot.Fric_Status;           // 摩擦轮
+        JudgeReceiveData.Minipc_Status             = chariot.MiniPC_Status;         // 自瞄是否离线
         JudgeReceiveData.Booster_User_Control_Type = chariot.Booster_User_Control_Type;
         // JudgeReceiveData.Supercap_Energy = chariot.Chassis.Supercap.Get_Stored_Energy();    // 超级电容储能
-        JudgeReceiveData.Supercap_Voltage = chariot.Chassis.Supercap.Get_Supercap_Charge_Percentage() / 100.0f; // 超级电容容量
-        JudgeReceiveData.Chassis_Control_Type = chariot.Chassis.Get_Chassis_Control_Type();                     // 底盘控制模式
-        JudgeReceiveData.Supercap_State = chariot.Sprint_Status;
-        JudgeReceiveData.booster_fric_omega_left = chariot.Booster_fric_omega_left; // 左摩擦轮速度; // 左摩擦轮速度
+        JudgeReceiveData.Supercap_Voltage         = chariot.Chassis.Supercap.Get_Supercap_Charge_Percentage() / 100.0f; // 超级电容容量
+        JudgeReceiveData.Chassis_Control_Type     = chariot.Chassis.Get_Chassis_Control_Type();                         // 底盘控制模式
+        JudgeReceiveData.Supercap_State           = chariot.Sprint_Status;
+        JudgeReceiveData.booster_fric_omega_left  = chariot.Booster_fric_omega_left; // 左摩擦轮速度; // 左摩擦轮速度
         JudgeReceiveData.booster_fric_omega_right = chariot.Booster_fric_omega_right;
-        JudgeReceiveData.Booster_bullet_num = chariot.Booster_bullet_num - chariot.Booster_bullet_num_before;
-        JudgeReceiveData.Booster_17mm_Heat = chariot.Booster_Heat; // chariot.Referee.Get_Booster_17mm_1_Heat();
-        JudgeReceiveData.Booster_17mm_Heat_Max = chariot.Referee.Get_Booster_17mm_1_Heat_Max();
-        JudgeReceiveData.Minipc_Mode = chariot.MiniPC_Type;
-        JudgeReceiveData.Antispin_Type = chariot.Antispin_Type;
+        JudgeReceiveData.Booster_bullet_num       = chariot.Booster_bullet_num - chariot.Booster_bullet_num_before;
+        JudgeReceiveData.Booster_17mm_Heat        = chariot.Booster_Heat; // chariot.Referee.Get_Booster_17mm_1_Heat();
+        JudgeReceiveData.Booster_17mm_Heat_Max    = chariot.Referee.Get_Booster_17mm_1_Heat_Max();
+        JudgeReceiveData.Minipc_Mode              = chariot.MiniPC_Type;
+        JudgeReceiveData.Antispin_Type            = chariot.Antispin_Type;
         if (chariot.Referee_UI_Refresh_Status == Referee_UI_Refresh_Status_ENABLE)
             Init_Cnt = 10;
     }

@@ -57,8 +57,7 @@ static const uint16_t W_CRC_TABLE[256] =
  * @brief 风车类型
  *
  */
-enum Enum_Windmill_Type : uint8_t
-{
+enum Enum_Windmill_Type : uint8_t {
     Windmill_Type_Small = 0,
     Windmill_Type_Big,
 };
@@ -67,8 +66,7 @@ enum Enum_Windmill_Type : uint8_t
  * @brief 迷你主机控制类型
  *
  */
-enum Enum_MiniPC_Type : uint8_t
-{
+enum Enum_MiniPC_Type : uint8_t {
     MiniPC_Type_Nomal = 0, // 装甲板
     MiniPC_Type_Windmill,  // 风车
 };
@@ -76,8 +74,7 @@ enum Enum_MiniPC_Type : uint8_t
  * @brief 反小陀螺状态
  *
  */
-enum Enum_Antispin_Type : uint8_t
-{
+enum Enum_Antispin_Type : uint8_t {
     Antispin_Off = 0,
     Antispin_On,
 };
@@ -86,8 +83,7 @@ enum Enum_Antispin_Type : uint8_t
  * @brief 迷你主机状态
  *
  */
-enum Enum_MiniPC_Status : uint8_t
-{
+enum Enum_MiniPC_Status : uint8_t {
     MiniPC_Status_DISABLE = 0,
     MiniPC_Status_ENABLE,
 };
@@ -96,8 +92,7 @@ enum Enum_MiniPC_Status : uint8_t
  * @brief 裁判系统UI刷新状态
  *
  */
-enum Enum_Referee_UI_Refresh_Status : uint8_t
-{
+enum Enum_Referee_UI_Refresh_Status : uint8_t {
     Referee_UI_Refresh_Status_DISABLE = 0,
     Referee_UI_Refresh_Status_ENABLE,
 };
@@ -106,8 +101,7 @@ enum Enum_Referee_UI_Refresh_Status : uint8_t
  * @brief 各种标签, 场地, 相关设施激活与存活状态
  *
  */
-enum Enum_MiniPC_Data_Status : uint8_t
-{
+enum Enum_MiniPC_Data_Status : uint8_t {
     MiniPC_Data_Status_DISABLE = 0,
     MiniPC_Data_Status_ENABLE,
 };
@@ -116,8 +110,7 @@ enum Enum_MiniPC_Data_Status : uint8_t
  * @brief 比赛阶段
  *
  */
-enum Enum_MiniPC_Game_Stage : uint8_t
-{
+enum Enum_MiniPC_Game_Stage : uint8_t {
     MiniPC_Game_Stage_NOT_STARTED = 0,
     MiniPC_Game_Stage_READY,
     MiniPC_Game_Stage_SELF_TESTING,
@@ -130,8 +123,7 @@ enum Enum_MiniPC_Game_Stage : uint8_t
  * @brief 战车运动控制方式
  *
  */
-enum Enum_MiniPC_Move_Control_Mode : uint8_t
-{
+enum Enum_MiniPC_Move_Control_Mode : uint8_t {
     MiniPC_Move_Control_Mode_OMEGA = 0,
     MiniPC_Move_Control_Mode_ANGLE,
 };
@@ -140,8 +132,7 @@ enum Enum_MiniPC_Move_Control_Mode : uint8_t
  * @brief 战车运动控制方式
  *
  */
-enum Enum_MiniPC_Self_Color : uint8_t
-{
+enum Enum_MiniPC_Self_Color : uint8_t {
     MiniPC_Self_Color_RED = 0,
     MiniPC_Self_Color_BLUE,
 };
@@ -150,8 +141,7 @@ enum Enum_MiniPC_Self_Color : uint8_t
  * @brief 迷你主机源数据
  *
  */
-struct Struct_MiniPC_USB_Data
-{
+struct Struct_MiniPC_USB_Data {
     uint8_t Frame_Header;
     uint8_t Data[50];
 } __attribute__((packed));
@@ -160,8 +150,7 @@ struct Struct_MiniPC_USB_Data
  * @brief 迷你主机接收的规划数据,
  *
  */
-struct Struct_MiniPC_Rx_Data
-{
+struct Struct_MiniPC_Rx_Data {
     uint8_t Reserved;
     float Chassis_Target_Velocity_X;
     float Chassis_Target_Velocity_Y;
@@ -182,8 +171,7 @@ struct Struct_MiniPC_Rx_Data
  * @brief 迷你主机发送的反馈数据
  *
  */
-struct Struct_MiniPC_Tx_Data
-{
+struct Struct_MiniPC_Tx_Data {
     Enum_MiniPC_Game_Stage Game_Stage;
     float Chassis_Now_Velocity_X;
     float Chassis_Now_Velocity_Y;
@@ -206,8 +194,7 @@ struct Struct_MiniPC_Tx_Data
  * @brief 发送数据包
  *
  */
-struct Pack_tx_t
-{
+struct Pack_tx_t {
 #ifdef MINIPC_COMM_USB
     uint8_t header;
     Enum_MiniPC_Game_Stage game_stage;
@@ -233,17 +220,15 @@ struct Pack_tx_t
 } __attribute__((packed));
 
 // can协议下发送数据包
-struct Pack_tx_can_t_A
-{
-    int16_t Roll;
-    int16_t Pitch;
-    int16_t Yaw;
-    int16_t Gyro_Yaw;
+struct Pack_tx_can_t_A {
+    int16_t x;
+    int16_t y;
+    int16_t z;
+    int16_t w;
 } __attribute__((packed));
 
 // can协议下发送数据包
-struct Pack_tx_can_t_B
-{
+struct Pack_tx_can_t_B {
     Enum_MiniPC_Game_Stage game_stage : 3;
     Enum_MiniPC_Type target_type : 1;
     Enum_Windmill_Type windmill_type : 1;
@@ -252,8 +237,7 @@ struct Pack_tx_can_t_B
  * @brief 接收数据包
  *
  */
-struct Pack_rx_t
-{
+struct Pack_rx_t {
 #ifdef MINIPC_COMM_USB
     uint8_t header;
     float target_yaw;
@@ -266,13 +250,10 @@ struct Pack_rx_t
 #endif
 
 #ifdef MINIPC_COMM_CAN
-    // int16_t target_x;
-    // int16_t target_y;
-    // int16_t target_z;
-    // int8_t  Fire;
+    uint8_t control;
+    uint8_t shoot;
     int16_t yaw;
     int16_t pitch;
-    uint8_t Fire;
 #endif
 } __attribute__((packed));
 
@@ -301,7 +282,8 @@ public:
     inline float Get_Booster_Frequency();
     inline float Get_Rx_Pitch_Angle();
     inline float Get_Rx_Yaw_Angle();
-    inline uint8_t Get_Fire_Status();
+    inline uint8_t Get_Control_Status();
+    inline uint8_t Get_Shoot_Status();
     inline float Get_Distance();
     inline Enum_MiniPC_Type Get_MiniPC_Type();
     inline Enum_MiniPC_Move_Control_Mode Get_Move_Control_Mode();
@@ -383,13 +365,16 @@ protected:
     float Tx_Angle_Yaw;
     float Tx_Angle_Gyro_Yaw;
 
+    Quaternion Tx_Quaternion;
+
     float Rx_Angle_Roll;
     float Rx_Angle_Pitch;
     float Rx_Angle_Yaw;
 
-    uint8_t Fire;
+    uint8_t Control;
+    uint8_t Shoot;
 
-    const float g = 9.8;         // 重力加速度
+    const float g        = 9.8;  // 重力加速度
     const float bullet_v = 21.7; // 子弹速度
 
     // 距离
@@ -571,9 +556,14 @@ float Class_MiniPC::Get_Rx_Yaw_Angle()
     return (Rx_Angle_Yaw);
 }
 
-inline uint8_t Class_MiniPC::Get_Fire_Status()
+inline uint8_t Class_MiniPC::Get_Control_Status()
 {
-    return Fire;
+    return Control;
+}
+
+inline uint8_t Class_MiniPC::Get_Shoot_Status()
+{
+    return Shoot;
 }
 
 /**
@@ -723,9 +713,19 @@ void Class_MiniPC::Set_Outpost_Protect_Status(Enum_MiniPC_Data_Status __Outpost_
 void Class_MiniPC::Transform_Angle_Tx()
 {
     Tx_Angle_Pitch = IMU->Get_Angle_Roll();
-    Tx_Angle_Roll = IMU->Get_Angle_Pitch();
-    Tx_Angle_Yaw = IMU->Get_Angle_Yaw();
-    // Tx_Angle_Gyro_Yaw = IMU->Get_Gyro_Yaw() * 57.3f;
+    Tx_Angle_Roll  = IMU->Get_Angle_Pitch();
+    Tx_Angle_Yaw   = IMU->Get_Angle_Yaw();
+
+    // 此处IMU Pitch和Roll为反的，故在此调换
+    float Yaw_rad   = IMU->Get_Rad_Yaw();
+    float Pitch_rad = IMU->Get_Rad_Roll();
+    float Roll_rad  = IMU->Get_Rad_Pitch();
+
+    // 将左手系的数据转换为右手系
+    Tx_Quaternion.w = arm_cos_f32(Roll_rad / 2.0f) * arm_cos_f32(Pitch_rad / 2.0f) * arm_cos_f32(Yaw_rad / 2.0f) - arm_sin_f32(Roll_rad / 2.0f) * arm_sin_f32(Pitch_rad / 2.0f) * arm_sin_f32(Yaw_rad / 2.0f);
+    Tx_Quaternion.x = arm_sin_f32(Roll_rad / 2.0f) * arm_cos_f32(Pitch_rad / 2.0f) * arm_cos_f32(Yaw_rad / 2.0f) + arm_cos_f32(Roll_rad / 2.0f) * arm_sin_f32(Pitch_rad / 2.0f) * arm_sin_f32(Yaw_rad / 2.0f);
+    Tx_Quaternion.y = arm_cos_f32(Roll_rad / 2.0f) * arm_sin_f32(Pitch_rad / 2.0f) * arm_cos_f32(Yaw_rad / 2.0f) - arm_sin_f32(Roll_rad / 2.0f) * arm_cos_f32(Pitch_rad / 2.0f) * arm_sin_f32(Yaw_rad / 2.0f);
+    Tx_Quaternion.z = arm_cos_f32(Roll_rad / 2.0f) * arm_cos_f32(Pitch_rad / 2.0f) * arm_sin_f32(Yaw_rad / 2.0f) + arm_sin_f32(Roll_rad / 2.0f) * arm_sin_f32(Pitch_rad / 2.0f) * arm_cos_f32(Yaw_rad / 2.0f);
 }
 
 #endif
