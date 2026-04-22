@@ -22,7 +22,7 @@
 #define IMAGE_VT13
 
 #define CHASSIS
-// #define GIMBAL
+//#define GIMBAL
 
 #ifdef GIMBAL
 
