@@ -403,8 +403,10 @@ void Class_Gimbal::Output()
         }
         else if ((Gimbal_Control_Type == Gimbal_Control_Type_MINIPC) && (MiniPC->Get_MiniPC_Status() != MiniPC_Status_DISABLE))
         {
-            Target_Pitch_Angle = MiniPC->Get_Rx_Pitch_Angle();
-            Target_Yaw_Angle = MiniPC->Get_Rx_Yaw_Angle();
+            if (MiniPC->Get_Control_Status()) {
+                Target_Pitch_Angle = MiniPC->Get_Rx_Pitch_Angle();
+                Target_Yaw_Angle = MiniPC->Get_Rx_Yaw_Angle();
+            }
         }
 
         Tmp_Target_Yaw_Angle = Target_Yaw_Angle;

@@ -592,10 +592,7 @@ void Class_Chariot::Control_Gimbal()
 
         if (MiniPC.Get_MiniPC_Status() == MiniPC_Status_ENABLE && Gimbal.Get_Gimbal_Control_Type() == Gimbal_Control_Type_MINIPC)
         {
-            tmp_gimbal_yaw = MiniPC.Get_Rx_Yaw_Angle();
-            tmp_gimbal_pitch = MiniPC.Get_Rx_Pitch_Angle();
-            if (Chassis.Get_Chassis_Control_Type() == Chassis_Control_Type_SPIN)
-            {
+            if (MiniPC.Get_Control_Status()) {
                 tmp_gimbal_yaw = MiniPC.Get_Rx_Yaw_Angle();
                 tmp_gimbal_pitch = MiniPC.Get_Rx_Pitch_Angle();
             }
