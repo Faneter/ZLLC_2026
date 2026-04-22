@@ -123,10 +123,10 @@ void Class_MiniPC::Output()
     Pack_Tx_CAN_B.game_stage  = (Enum_MiniPC_Game_Stage)Referee->Get_Game_Stage();
     Pack_Tx_CAN_B.target_type = Get_MiniPC_Type();
 
-    Pack_Tx_CAN_A.x = static_cast<uint16_t>(Tx_Quaternion.x * 10000.0f);
-    Pack_Tx_CAN_A.y = static_cast<uint16_t>(Tx_Quaternion.y * 10000.0f);
-    Pack_Tx_CAN_A.z = static_cast<uint16_t>(Tx_Quaternion.z * 10000.0f);
-    Pack_Tx_CAN_A.w = static_cast<uint16_t>(Tx_Quaternion.w * 10000.0f);
+    Pack_Tx_CAN_A.x = static_cast<int16_t>(Tx_Quaternion.x * 10000.0f);
+    Pack_Tx_CAN_A.y = static_cast<int16_t>(Tx_Quaternion.y * 10000.0f);
+    Pack_Tx_CAN_A.z = static_cast<int16_t>(Tx_Quaternion.z * 10000.0f);
+    Pack_Tx_CAN_A.w = static_cast<int16_t>(Tx_Quaternion.w * 10000.0f);
     memcpy(CAN_Tx_Data_A, &Pack_Tx_CAN_A, sizeof(Pack_tx_can_t_A));
     memcpy(CAN_Tx_Data_B, &Pack_Tx_CAN_B, sizeof(Pack_tx_can_t_B));
 
