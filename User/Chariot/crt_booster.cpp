@@ -35,16 +35,34 @@ Enum_Friction_Control_Type Last_Friction_Control_Type =
     Friction_Control_Type_DISABLE;
 void Class_FSM_Heat_Detect::Reload_TIM_Status_PeriodElapsedCallback()
 {
+    // 从扭矩变化到确认发弹，所需要的时间(ms)
+    static constexpr uint8_t CONFIRM_TIME = 8;
+
+    // 从扭矩变化到确认未发弹，所需要的超时时间(ms)
+    static constexpr uint8_t CONFIRM_TIMEOUT = 8;
+
+    // 从扭矩变化到确认发弹，所需要的拨弹盘转动量(°)
+    static constexpr uint8_t CONFIRM_ANGLE = 20;
+
     Status[Now_Status_Serial].Time++;
 
-    // static Enum_Friction_Control_Type Last_Friction_Control_Type =
-    // Friction_Control_Type_DISABLE;
+    static float last_angle = 0.0f;
+
+    // 与裁判系统值比对，修正误差
+    if (abs(Booster->Referee->Get_Booster_17mm_1_Heat() - Heat) >= 10) {
+        Heat += 0.0005f * (Booster->Referee->Get_Booster_17mm_1_Heat() - Heat);
+
+        // 保险措施
+        if (Booster->Referee->Get_Booster_17mm_1_Heat() - Heat >= 12) {
+            Heat = Booster->Referee->Get_Booster_17mm_1_Heat();
+        }
+    }
 
     // 自己接着编写状态转移函数
     switch (Now_Status_Serial) {
         case (0): {
             // 正常状态
-
+            last_angle = Booster->Motor_Driver.Get_Now_Angle();
             if (abs(Booster->Motor_Friction_Right.Get_Now_Torque()) >=
                     Booster->Friction_Torque_Threshold &&
                 abs(Booster->Motor_Friction_Right.Get_Now_Torque()) <= 10000) {
@@ -58,8 +76,7 @@ void Class_FSM_Heat_Detect::Reload_TIM_Status_PeriodElapsedCallback()
         } break;
         case (1): {
             // 发射嫌疑状态
-
-            if (Status[Now_Status_Serial].Time >= 30) {
+            if (Status[Now_Status_Serial].Time >= CONFIRM_TIME && (Booster->Motor_Driver.Get_Now_Angle() - last_angle) >= CONFIRM_ANGLE) {
                 // 长时间大扭矩->确认是发射了
                 Set_Status(2);
             }
@@ -67,19 +84,16 @@ void Class_FSM_Heat_Detect::Reload_TIM_Status_PeriodElapsedCallback()
         case (2): {
             if (Last_Friction_Control_Type == Friction_Control_Type_DISABLE &&
                 Booster->Friction_Control_Type == Friction_Control_Type_ENABLE) {
-                // Heat += 100.0f;
                 Last_Friction_Control_Type = Booster->Get_Friction_Control_Type();
                 Set_Status(0);
             } else if (Last_Friction_Control_Type == Friction_Control_Type_ENABLE &&
                        Booster->Friction_Control_Type ==
                            Friction_Control_Type_DISABLE) {
-                // Heat += 100.0f;
                 Last_Friction_Control_Type = Booster->Get_Friction_Control_Type();
                 Set_Status(0);
             } else {
                 // 发射完成状态->加上热量进入下一轮检测
                 Booster->actual_bullet_num++;
-                // shoot_num ++;
                 Heat += 10.0f;
                 Set_Status(0);
             }
@@ -360,6 +374,7 @@ void Class_Booster::Output()
             float a = static_cast<float>(Referee->Get_Booster_17mm_1_Heat_CD());
             // 枪口还能利用的热量上限(单位：点)
             float m = static_cast<float>(Referee->Get_Booster_17mm_1_Heat_Max() - FSM_Heat_Detect.Heat);
+            // float m = static_cast<float>(Referee->Get_Booster_17mm_1_Heat_Max() - Referee->Get_Booster_17mm_1_Heat());
             // 每射击一发消耗热量(单位：点)
             constexpr float d = 10.0f;
             // 射速(单位：发/s)
